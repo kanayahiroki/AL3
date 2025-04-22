@@ -49,6 +49,4 @@ void GameScene::Draw()
 	// 3Dモデル描画後処理
 	Model::PostDraw();
 
-	// 自キャラの描画
-	player_->Draw();
 }
