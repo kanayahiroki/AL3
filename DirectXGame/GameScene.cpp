@@ -1,16 +1,21 @@
 #include "GameScene.h"
 #include "MyMath.h"
+#include "Skydome.h"
 
 using namespace KamataEngine;
 // 初期化
 void GameScene::Initialize() {
-	textureHandle_ = TextureManager::Load("uvChecker.png");
+	
 
 	;
 
 	model_ = KamataEngine::Model::Create();
 
-	modelBlock_ = Model::CreateFromOBJ("cube");
+	modelBlock_ = Model::CreateFromOBJ("block");
+
+	modelSkydome_ = Model::CreateFromOBJ("skydome", true);
+
+	modelPlayer_ = Model::CreateFromOBJ("player");
 
 	worldTransform_.Initialize();
 
@@ -18,7 +23,10 @@ void GameScene::Initialize() {
 	// 自キャラの生成
 	player_ = new Player();
 	// 自キャラの初期化
-	player_->Initialize(model_, textureHandle_, &camera_);
+	player_->Initialize(modelPlayer_,&camera_);
+
+	skydome_ = new Skydome();
+	skydome_->Initialize(modelSkydome_,&camera_);
 
 	// 要素数
 	const uint32_t kNumBlockVirtical = 10;
@@ -64,6 +72,7 @@ void GameScene::Update() {
 			worldTransformBlock->TransferMatrix();
 		}
 	}
+	skydome_->Update();
 	debugCamera_->Update();
 #ifdef _DEBUG
 	if (Input::GetInstance()->TriggerKey(DIK_0)) {
@@ -100,7 +109,8 @@ void GameScene::Draw() {
 			modelBlock_->Draw(*worldTransformBlock, camera_);
 		}
 	}
-
+	skydome_->Draw();
+	player_->Draw();
 	Model::PostDraw();
 }
 // デストラクタ
@@ -108,7 +118,7 @@ GameScene::~GameScene() {
 	delete model_;
 	// 自キャラの解放
 	delete player_;
-
+	delete modelSkydome_;
 	// for (WorldTransform* worldTransformBlocks : worldTransformBlocks_)
 	//{}
 

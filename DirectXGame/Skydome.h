@@ -1,19 +1,32 @@
 #pragma once
-#include "KamataEngine.h"
-class Player {
+#include <KamataEngine.h>
+class Skydome
+{
 public:
+	
+	// <summary>
 	// 初期化
+	// </summary>
 	void Initialize(KamataEngine::Model* model, KamataEngine::Camera* camera);
+
+	// <summary>
 	// 更新
+	// </summary>
 	void Update();
+
+	// <summary>
 	// 描画
+	// </summary>
+
 	void Draw();
 
-private:
-	// ワールド変換データ
+	
+	private:
+		//ワールド変換データ
 	KamataEngine::WorldTransform worldTransform_;
-	// モデル
+	//モデル
 	KamataEngine::Model* model_ = nullptr;
-
+	
 	KamataEngine::Camera* camera_ = nullptr;
 };
+

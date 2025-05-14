@@ -1,6 +1,7 @@
 #pragma once
 #include "KamataEngine.h"
 #include "Player.h"
+#include"Skydome.h"
 #include <vector>
 
 class GameScene {
@@ -15,19 +16,25 @@ public:
 	~GameScene();
 
 	Player* player_ = nullptr;
-
-private:
-	uint32_t textureHandle_ = 0;
-
+	Skydome* skydome_ = nullptr;
 	KamataEngine::Model* model_ = nullptr;
 
 	KamataEngine::Model* modelBlock_ = nullptr;
+
+	KamataEngine::Model* modelSkydome_ = nullptr;
+
+	KamataEngine::Model* modelPlayer_ = nullptr;
+
+private:
+
+	
 
 	KamataEngine::WorldTransform worldTransform_;
 
 	KamataEngine::Camera camera_;
 
 	KamataEngine::DebugCamera* debugCamera_ = nullptr;
+
 
 	std::vector<std::vector<KamataEngine::WorldTransform*>> worldTransformBlocks_;
 
