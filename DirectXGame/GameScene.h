@@ -1,11 +1,20 @@
 #pragma once
 #include "KamataEngine.h"
+#include "MapChipFiled.h"
 #include "Player.h"
-#include"Skydome.h"
+#include "Skydome.h"
 #include <vector>
 
 class GameScene {
 public:
+	KamataEngine::Model* model_ = nullptr;
+
+	KamataEngine::Model* modelBlock_ = nullptr;
+
+	KamataEngine::Model* modelSkydome_ = nullptr;
+
+	KamataEngine::Model* modelPlayer_ = nullptr;
+
 	// 初期化
 	void Initialize();
 	// 更新
@@ -16,25 +25,20 @@ public:
 	~GameScene();
 
 	Player* player_ = nullptr;
+
 	Skydome* skydome_ = nullptr;
-	KamataEngine::Model* model_ = nullptr;
 
-	KamataEngine::Model* modelBlock_ = nullptr;
+	// 表示ブロック
+	void GenerateBlocks();
 
-	KamataEngine::Model* modelSkydome_ = nullptr;
-
-	KamataEngine::Model* modelPlayer_ = nullptr;
+	MapChipFiled* mapChipFiled_;
 
 private:
-
-	
-
 	KamataEngine::WorldTransform worldTransform_;
 
 	KamataEngine::Camera camera_;
 
 	KamataEngine::DebugCamera* debugCamera_ = nullptr;
-
 
 	std::vector<std::vector<KamataEngine::WorldTransform*>> worldTransformBlocks_;
 

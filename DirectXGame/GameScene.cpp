@@ -1,13 +1,9 @@
 #include "GameScene.h"
 #include "MyMath.h"
-#include "Skydome.h"
 
 using namespace KamataEngine;
-// 初期化
+// 初期化/////////////////////////////////////////////////////////////
 void GameScene::Initialize() {
-	
-
-	;
 
 	model_ = KamataEngine::Model::Create();
 
@@ -23,37 +19,43 @@ void GameScene::Initialize() {
 	// 自キャラの生成
 	player_ = new Player();
 	// 自キャラの初期化
-	player_->Initialize(modelPlayer_,&camera_);
+	player_->Initialize(modelPlayer_, &camera_);
 
+	// 生成
 	skydome_ = new Skydome();
-	skydome_->Initialize(modelSkydome_,&camera_);
+	// 初期化
+	skydome_->Initialize(modelSkydome_, &camera_);
 
 	// 要素数
-	const uint32_t kNumBlockVirtical = 10;
-	const uint32_t kNumBlockHorizontal = 20;
-	// ブロック一個分の横幅
-	const float kBlockWidth = 2.0f;
-	const float kBlockHeigth = 2.0f;
-	// 要素数を変更する
-	worldTransformBlocks_.resize(kNumBlockVirtical);
-	for (uint32_t i = 0; i < kNumBlockVirtical; ++i) {
-		worldTransformBlocks_[i].resize(kNumBlockHorizontal);
-	}
+	// const uint32_t kNumBlockVirtical = 10;
+	// const uint32_t kNumBlockHorizontal = 20;
+	//// ブロック一個分の横幅
+	// const float kBlockWidth = 2.0f;
+	// const float kBlockHeigth = 2.0f;
+	//  要素数を変更する
+	// worldTransformBlocks_.resize(kNumBlockVirtical);
+	// for (uint32_t i = 0; i < kNumBlockVirtical; ++i) {
+	//	worldTransformBlocks_[i].resize(kNumBlockHorizontal);
+	// }
 
-	// キューブの生成
-	for (uint32_t i = 0; i < kNumBlockVirtical; ++i) {
-		for (uint32_t j = 0; j < kNumBlockHorizontal; ++j) {
-			if ((i + j) % 2 == 0)
-				continue;
-			worldTransformBlocks_[i][j] = new WorldTransform();
-			worldTransformBlocks_[i][j]->Initialize();
-			worldTransformBlocks_[i][j]->translation_.x = kBlockWidth * j;
-			worldTransformBlocks_[i][j]->translation_.y = kBlockHeigth * i;
-		}
-	}
+	//// キューブの生成
+	// for (uint32_t i = 0; i < kNumBlockVirtical; ++i) {
+	//	for (uint32_t j = 0; j < kNumBlockHorizontal; ++j) {
+	//		if ((i + j) % 2 == 0)
+	//			continue;
+	//		worldTransformBlocks_[i][j] = new WorldTransform();
+	//		worldTransformBlocks_[i][j]->Initialize();
+	//		worldTransformBlocks_[i][j]->translation_.x = kBlockWidth * j;
+	//		worldTransformBlocks_[i][j]->translation_.y = kBlockHeigth * i;
+	//	}
+	// }
 	debugCamera_ = new DebugCamera(1280, 720);
+
+	mapChipFiled_ = new MapChipFiled;
+	mapChipFiled_->LoadMapChipCsv("Resources/blocks.csv");
+	GenerateBlocks();
 }
-// 更新
+// 更新/////////////////////////////////////////////////////////////////////////////////////
 void GameScene::Update() {
 	// 自キャラの更新
 	player_->Update();
@@ -72,7 +74,7 @@ void GameScene::Update() {
 			worldTransformBlock->TransferMatrix();
 		}
 	}
-	skydome_->Update();
+
 	debugCamera_->Update();
 #ifdef _DEBUG
 	if (Input::GetInstance()->TriggerKey(DIK_0)) {
@@ -92,8 +94,10 @@ void GameScene::Update() {
 		// ビュープロジェクション行列の更新と転送
 		camera_.UpdateMatrix();
 	}
+
+	skydome_->Update();
 }
-// 描画
+// 描画/////////////////////////////////////////////////////////////////////////////////
 void GameScene::Draw() {
 	DirectXCommon* dxCommon = DirectXCommon::GetInstance();
 
@@ -109,18 +113,17 @@ void GameScene::Draw() {
 			modelBlock_->Draw(*worldTransformBlock, camera_);
 		}
 	}
+
 	skydome_->Draw();
 	player_->Draw();
+
 	Model::PostDraw();
 }
-// デストラクタ
+// デストラクタ////////////////////////////////////////////////////////////////////////////////
 GameScene::~GameScene() {
 	delete model_;
 	// 自キャラの解放
 	delete player_;
-	delete modelSkydome_;
-	// for (WorldTransform* worldTransformBlocks : worldTransformBlocks_)
-	//{}
 
 	for (std::vector<WorldTransform*>& worldTransformBlockLine : worldTransformBlocks_) {
 		for (WorldTransform* worldTransformBlock : worldTransformBlockLine) {
@@ -129,4 +132,33 @@ GameScene::~GameScene() {
 	}
 	worldTransformBlocks_.clear();
 	delete debugCamera_;
+
+	delete skydome_;
+
+	delete modelSkydome_;
+
+	delete mapChipFiled_;
+}
+
+void GameScene::GenerateBlocks() {
+	uint32_t numBlockVirtical = mapChipFiled_->GetNumBlockVirtical();
+	uint32_t numBlockHorizontal = mapChipFiled_->GetNumBlockHorizontal();
+	// 要素数を変更する
+	// 列数を設定（縦方向のブロック数）
+	worldTransformBlocks_.resize(numBlockVirtical);
+
+	for (uint32_t i = 0; i < numBlockVirtical; ++i) {
+		// 一列の要素数を設定（横方向のブロック数）
+		worldTransformBlocks_[i].resize(numBlockHorizontal);
+	}
+	for (uint32_t i = 0; i < numBlockVirtical; ++i) {
+		for (UINT32 j = 0; j < numBlockHorizontal; ++j) {
+			if (mapChipFiled_->GetMapChipTypeByIndex(j, i) == MapChipType::kBlock) {
+				WorldTransform* worldTransform = new WorldTransform();
+				worldTransform->Initialize();
+				worldTransformBlocks_[i][j] = worldTransform;
+				worldTransformBlocks_[i][j]->translation_ = mapChipFiled_->GetMapChipPositionByIndex(j, i);
+			}
+		}
+	}
 }
