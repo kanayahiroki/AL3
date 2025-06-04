@@ -19,7 +19,10 @@ void GameScene::Initialize() {
 	// 自キャラの生成
 	player_ = new Player();
 	// 自キャラの初期化
-	player_->Initialize(modelPlayer_, &camera_);
+	//
+	//
+	//
+	// player_->Initialize(modelPlayer_, &camera_,playerPosition);
 
 	// 生成
 	skydome_ = new Skydome();
@@ -54,7 +57,12 @@ void GameScene::Initialize() {
 	mapChipFiled_ = new MapChipFiled;
 	mapChipFiled_->LoadMapChipCsv("Resources/blocks.csv");
 	GenerateBlocks();
+
+	// 座標をマップ地プ番号で指定
+	Vector3 playerPosition = mapChipFiled_->GetMapChipPositionByIndex(1, 18);
+	player_->Initialize(modelPlayer_, &camera_, playerPosition);
 }
+
 // 更新/////////////////////////////////////////////////////////////////////////////////////
 void GameScene::Update() {
 	// 自キャラの更新
