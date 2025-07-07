@@ -1,9 +1,10 @@
 #pragma once
+#include "CameraController.h"
 #include "KamataEngine.h"
-#include "MapChipFiled.h"
 #include "Player.h"
 #include "Skydome.h"
 #include <vector>
+#include "mapChipFiled.h"
 
 class GameScene {
 public:
@@ -32,6 +33,8 @@ public:
 	void GenerateBlocks();
 
 	MapChipFiled* mapChipFiled_;
+
+	CameraController* cameraController_;
 
 private:
 	KamataEngine::WorldTransform worldTransform_;

@@ -15,7 +15,6 @@ void GameScene::Initialize() {
 
 	worldTransform_.Initialize();
 
-	camera_.Initialize();
 	// 自キャラの生成
 	player_ = new Player();
 	// 自キャラの初期化
@@ -55,12 +54,28 @@ void GameScene::Initialize() {
 	debugCamera_ = new DebugCamera(1280, 720);
 
 	mapChipFiled_ = new MapChipFiled;
+
 	mapChipFiled_->LoadMapChipCsv("Resources/blocks.csv");
+
 	GenerateBlocks();
 
 	// 座標をマップ地プ番号で指定
 	Vector3 playerPosition = mapChipFiled_->GetMapChipPositionByIndex(1, 18);
 	player_->Initialize(modelPlayer_, &camera_, playerPosition);
+
+	camera_.Initialize();
+
+	cameraController_ = new CameraController();
+
+	cameraController_->Initialize();
+
+	cameraController_->SetTarget(player_);
+
+	cameraController_->Reset();
+
+	// カメラ移動範囲
+	CameraController::Rect cameraArea = {12.0f, 100 - 12.0f, 6.0f, 6.0f};
+	cameraController_->SetMovableArea(cameraArea);
 }
 
 // 更新/////////////////////////////////////////////////////////////////////////////////////
@@ -83,6 +98,7 @@ void GameScene::Update() {
 		}
 	}
 
+	cameraController_->Update();
 	debugCamera_->Update();
 #ifdef _DEBUG
 	if (Input::GetInstance()->TriggerKey(DIK_0)) {
@@ -100,7 +116,10 @@ void GameScene::Update() {
 		camera_.TransferMatrix();
 	} else {
 		// ビュープロジェクション行列の更新と転送
-		camera_.UpdateMatrix();
+		camera_.matView = cameraController_->GetViewProjection().matView;
+		camera_.matProjection = cameraController_->GetViewProjection().matProjection;
+		// ビュープロジェクション行列の転送
+		camera_.TransferMatrix();
 	}
 
 	skydome_->Update();
@@ -146,6 +165,8 @@ GameScene::~GameScene() {
 	delete modelSkydome_;
 
 	delete mapChipFiled_;
+
+	delete cameraController_;
 }
 
 void GameScene::GenerateBlocks() {
