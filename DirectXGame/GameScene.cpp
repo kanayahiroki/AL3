@@ -76,6 +76,9 @@ void GameScene::Initialize() {
 	// カメラ移動範囲
 	CameraController::Rect cameraArea = {12.0f, 100 - 12.0f, 6.0f, 6.0f};
 	cameraController_->SetMovableArea(cameraArea);
+
+	
+	player_ -> SetMapChipFiled(mapChipFiled_);
 }
 
 // 更新/////////////////////////////////////////////////////////////////////////////////////

@@ -3,6 +3,8 @@
 #include <map>
 #include <sstream>
 
+
+
 std::map<std::string, MapChipType> MapChipTable = {
     {"0", MapChipType::kBlank},
     {"1", MapChipType::kBlock},
@@ -63,3 +65,28 @@ KamataEngine::Vector3 MapChipFiled::GetMapChipPositionByIndex(uint32_t xIndex, u
 
 	return KamataEngine::Vector3(kBlockWidth * xIndex, kBlockHeight * (kNumBlockVirtical - 1 - yIndex), 0);
 }
+
+MapChipFiled::IndexSet MapChipFiled::GetMapChipPositionByIndex(const KamataEngine::Vector3& position) {
+	IndexSet indexSet = {};
+	indexSet.xIndex = static_cast<uint32_t>((position.x + kBlockWidth / 2) / kBlockWidth);
+	indexSet.yIndex = kNumBlockVirtical - 1 - static_cast<uint32_t>((position.y + kBlockHeight / 2) / kBlockHeight);
+	return IndexSet();
+}
+
+MapChipFiled::IndexSet MapChipFiled::GetMapChipIndexSetByPosition(const KamataEngine::Vector3& position) {
+	IndexSet indexSet = {};
+	indexSet.xIndex = static_cast<uint32_t>(position.x / kBlockWidth);
+	indexSet.yIndex = kNumBlockVirtical - 1 - static_cast<uint32_t>(position.y / kBlockHeight);
+	return indexSet;
+}
+
+MapChipFiled::Rect MapChipFiled::GetRectByIndex(uint32_t xIndex, uint32_t yIndex) { 
+	//指定ブロックの中心座標を取得する
+	KamataEngine::Vector3 center = GetMapChipPositionByIndex(xIndex, yIndex);
+
+	Rect rect;
+	rect.left = center.x - kBlockWidth / 2;	
+	rect.right = center.x + kBlockWidth / 2;
+	rect.bottom = center.y - kBlockHeight / 2;
+	rect.top = center.y + kBlockHeight / 2;
+	return Rect(); }

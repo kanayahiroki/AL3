@@ -35,4 +35,23 @@ public:
 
 	uint32_t GetNumBlockVirtical() const { return kNumBlockVirtical; }
 	uint32_t GetNumBlockHorizontal() const { return kNumBlockHorizontal; }
+
+	struct IndexSet {
+		uint32_t xIndex;
+		uint32_t yIndex;
+	};
+
+	// 範囲矩形
+	struct Rect {
+		float left;   // 左端
+		float right;  // 右端
+		float bottom; // 下端
+		float top;    // 上端
+	};
+	IndexSet GetMapChipPositionByIndex(const KamataEngine::Vector3& position);
+
+	IndexSet GetMapChipIndexSetByPosition(const KamataEngine::Vector3& position);
+
+	Rect GetRectByIndex(uint32_t xIndex, uint32_t yIndex);
+
 };
