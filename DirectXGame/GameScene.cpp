@@ -77,8 +77,9 @@ void GameScene::Initialize() {
 	CameraController::Rect cameraArea = {12.0f, 100 - 12.0f, 6.0f, 6.0f};
 	cameraController_->SetMovableArea(cameraArea);
 
-	
-	player_ -> SetMapChipFiled(mapChipFiled_);
+	// マップチップデータのセット
+	// 自キャラの生成と初期化
+	player_->SetMapChipFiled(mapChipFiled_);
 }
 
 // 更新/////////////////////////////////////////////////////////////////////////////////////
