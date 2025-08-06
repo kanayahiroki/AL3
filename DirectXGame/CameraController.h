@@ -49,5 +49,5 @@ private:
 	KamataEngine::Camera camera_;
 	Player* target_ = nullptr;
 	// 追従対象とカメラの座標の差（オフセット）
-	Vector3 targetOffset_ = {0, 0, -15.0f};
+	Vector3 targetOffset_ = {0, 0, -20.0f};
 };

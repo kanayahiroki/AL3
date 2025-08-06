@@ -1,3 +1,4 @@
+
 #include "GameScene.h"
 #include "MyMath.h"
 
@@ -81,7 +82,7 @@ void GameScene::Initialize() {
 
 	// マップチップデータのセット
 	// 自キャラの生成と初期化
-	player_->SetMapChipFiled(mapChipFiled_);
+	player_->SetMapChipField(mapChipFiled_);
 
 	// 敵
 	enemy_ = new Enemy();
