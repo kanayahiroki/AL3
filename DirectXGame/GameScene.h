@@ -27,7 +27,10 @@ public:
 	Skydome* skydome_ = nullptr;
 
 	// 敵
-	Enemy* enemy_ = nullptr;
+	std::list<Enemy*> enemies_;
+
+	// 全ての当たり判定を行う
+	void CheckAllCollisions();
 
 	// 表示ブロック
 	void GenerateBlocks();

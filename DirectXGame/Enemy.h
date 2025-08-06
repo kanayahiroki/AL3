@@ -1,6 +1,8 @@
 #pragma once
 #include "KamataEngine.h"
+#include "MyMath.h"
 
+class Player;
 class Enemy {
 public:
 	// 初期化
@@ -26,10 +28,23 @@ public:
 	// 経過時間
 	float walkTimer_ = 0.0f;
 
+	// ワールド座標を取得
+	KamataEngine::Vector3 GetWorldPosition();
+
+	// AABBを取得
+	AABB GetAABB();
+
+	// 衝突応答
+	void OnCollision(const Player* player);
+
 private:
 	KamataEngine::WorldTransform worldTransform_;
 
 	KamataEngine::Model* model_ = nullptr;
 
 	KamataEngine::Camera* camera_ = nullptr;
+
+	// キャラクターの当たり判定サイズ
+	static inline const float kWidth = 0.8f;
+	static inline const float kHeight = 0.8f;
 };

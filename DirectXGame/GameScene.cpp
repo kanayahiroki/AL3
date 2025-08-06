@@ -1,4 +1,3 @@
-
 #include "GameScene.h"
 #include "MyMath.h"
 
@@ -85,10 +84,16 @@ void GameScene::Initialize() {
 	player_->SetMapChipField(mapChipFiled_);
 
 	// 敵
-	enemy_ = new Enemy();
-	Vector3 enemyPosition = mapChipFiled_->GetMapChipPositionByIndex(15, 18);
 
-	enemy_->Initialize(modelEnemy_, &camera_, enemyPosition);
+	// Vector3 enemyPosition = mapChipField_->GetMapChipPositionByIndex(15, 18);
+	// enemy_->Initialize(modelEnemy_, &camera_, enemyPosition);
+
+	for (int32_t i = 0; i < 5; i++) {
+		Enemy* newEnemy = new Enemy();
+		Vector3 enemyPosition = mapChipFiled_->GetMapChipPositionByIndex(6 + i, 18);
+		newEnemy->Initialize(modelEnemy_, &camera_, enemyPosition);
+		enemies_.push_back(newEnemy);
+	}
 }
 
 // 更新/////////////////////////////////////////////////////////////////////////////////////
@@ -137,7 +142,11 @@ void GameScene::Update() {
 
 	skydome_->Update();
 
-	enemy_->Update();
+	for (Enemy* enemy : enemies_) {
+		enemy->Update();
+	}
+	// 全ての当たり判定を行う
+	CheckAllCollisions();
 }
 // 描画/////////////////////////////////////////////////////////////////////////////////
 void GameScene::Draw() {
@@ -158,7 +167,10 @@ void GameScene::Draw() {
 
 	skydome_->Draw();
 	player_->Draw();
-	enemy_->Draw();
+
+	for (Enemy* enemy : enemies_) {
+		enemy->Draw();
+	}
 
 	Model::PostDraw();
 }
@@ -184,7 +196,34 @@ GameScene::~GameScene() {
 
 	delete cameraController_;
 
-	delete enemy_;
+	// 解放
+	for (Enemy* enemy : enemies_) {
+		delete enemy;
+	}
+}
+
+void GameScene::CheckAllCollisions() {
+#pragma region 自キャラと敵キャラの当たり判定
+	// 判定対象１と２の座標
+	AABB aabb1, aabb2;
+
+	// 自キャラの座標
+	aabb1 = player_->GetAABB();
+
+	// 自キャラと敵弾全ての当たり判定
+	for (Enemy* enemy : enemies_) {
+		// 敵弾の座標
+		aabb2 = enemy->GetAABB();
+		// AABB同士の交差判定
+		if (IsCollision(aabb1, aabb2)) {
+			// 自キャラの衝突時間関数を呼び出す
+			player_->OnCollision(enemy);
+			// 敵弾の衝突時コールバックを呼び出す
+			enemy->OnCollision(player_);
+		}
+	}
+
+#pragma endregion
 }
 
 void GameScene::GenerateBlocks() {

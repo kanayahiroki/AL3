@@ -1,7 +1,9 @@
 #pragma once
 #include "KamataEngine.h"
+#include "MyMath.h"
 // 前方宣言
 class MapChipFiled;
+class Enemy;
 
 // ２移動量を加味して衝突判定する//
 // マップとの当たり判定情報
@@ -36,7 +38,7 @@ public:
 	float turnFIrstRotationY_ = 0.0f;
 	// 旋回タイマー
 	float turnTimer_ = 0.0f;
-
+	// 旋回時間<秒>
 	static inline const float kTimeTurn = 0.9f;
 
 	// 接地状態フラグ
@@ -58,8 +60,14 @@ public:
 	// マップチップSetter
 	void SetMapChipField(MapChipFiled* mapChipFiled) { mapChipFiled_ = mapChipFiled; }
 
-	// 移動量を加味して衝突判定する//
-	// マップ衝突判定
+	// ワールド座標を取得
+	KamataEngine::Vector3 GetWorldPosition();
+
+	// AABBを取得
+	AABB GetAABB();
+
+	// 衝突応答
+	void OnCollision(const Enemy* enemy);
 
 private:
 	// ワールド変換データ
