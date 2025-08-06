@@ -1,50 +1,77 @@
 #pragma once
 #include "KamataEngine.h"
+#include "MapChipFiled.h"
 #include "MyMath.h"
+#include "UpData.h"
 
+using namespace KamataEngine;
+
+// 02_10 20枚目
 class Player;
+
+/// <summary>
+/// 敵
+/// </summary>
 class Enemy {
 public:
-	// 初期化
-	void Initialize(KamataEngine::Model* model, KamataEngine::Camera* camera, KamataEngine::Vector3& position);
-	// 更新
-	void Update();
-	// 描画
+	/// <summary>
+	/// 初期化
+	/// </summary>
+	/// <param name="model_"></param>
+	/// <param name="camera_"></param>
+	/// <param name="position"></param>
+	void Initialize(Model* model, Camera* camera, const Vector3& position);
+
+	/// <summary>
+	/// 更新
+	/// </summary>
+	void UpDate();
+
+	/// <summary>
+	/// 描画
+	/// </summary>
 	void Draw();
 
-	// 歩行の速さ
-	static inline const float kWalkSpeed = 0.04f;
-
-	// 速度
-	KamataEngine::Vector3 velocity_ = {};
-
-	// 最初の角度[度]
-	static inline const float kWalkMotionAngleStart = 5.0f;
-	// 最後の角度[度]
-	static inline const float kWalkMotionAngleEnd = 5.0f;
-	// アニメーションの周期となる時間[秒]
-	static inline const float kWalkMotionTime = 5.0f;
-
-	// 経過時間
-	float walkTimer_ = 0.0f;
-
-	// ワールド座標を取得
-	KamataEngine::Vector3 GetWorldPosition();
-
-	// AABBを取得
+	// 02_10 スライド14枚目
 	AABB GetAABB();
-
-	// 衝突応答
+	// 02_10 スライド14枚目 ワールド座標を取得
+	Vector3 GetWorldPosition();
+	// 02_10 スライド20枚目 衝突応答
 	void OnCollision(const Player* player);
 
 private:
-	KamataEngine::WorldTransform worldTransform_;
+	// ワールド変換データ
+	WorldTransform worldTransform_;
 
-	KamataEngine::Model* model_ = nullptr;
+	// モデル
+	Model* model_ = nullptr;
 
-	KamataEngine::Camera* camera_ = nullptr;
+	UpData* upData = nullptr;
 
-	// キャラクターの当たり判定サイズ
+	// テクスチャハンドル
+	//  uint32_t textureHandle_ = 0u;
+
+	Camera* camera_ = nullptr;
+
+	// 02_09 15枚目
+	static inline const float kWalkSpeed = 0.02f;
+	// 02_09 15枚目
+	Vector3 velocity_ = {};
+
+	// 02_09 19枚目
+	// 最初の角度
+	static inline const float kWalkMotionAngleStart = -10.0f;
+
+	// 02_09 19枚目
+	// 最後の角度
+	static inline const float kWalkMotionAngleEnd = 40.0f;
+
+	// 02_09 19枚目
+	static inline const float kWalkMotionTime = 1.0f;
+	// 02_09 20枚目
+	float walkTimer = 0.0f;
+
+	// 02_10 14枚目 当たり判定サイズ
 	static inline const float kWidth = 0.8f;
 	static inline const float kHeight = 0.8f;
 };

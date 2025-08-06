@@ -1,61 +1,108 @@
 #pragma once
 #include "CameraController.h"
+#include "DeathParticle.h"
 #include "Enemy.h"
-#include "KamataEngine.h"
+#include "Fade.h"
 #include "MapChipFiled.h"
 #include "Player.h"
 #include "Skydome.h"
-#include <vector>
+#include "UpData.h"
+#include <KamataEngine.h>
 
+using namespace KamataEngine;
+
+// ゲームシーン
 class GameScene {
 public:
-	KamataEngine::Model* model_ = nullptr;
+	// 初期化
+	void Initialize();
 
-	KamataEngine::Model* modelBlock_ = nullptr;
-	// 3Dモデル
-	KamataEngine::Model* modelSkydome_ = nullptr;
-	// モデルプレイヤー
-	KamataEngine::Model* modelPlayer_ = nullptr;
+	// 更新
+	void Update();
 
-	// モデル敵
-	KamataEngine::Model* modelEnemy_ = nullptr;
+	// 描画
+	void Draw();
+
+	~GameScene();
+
+	void GenerateBlocks();
+
+	// 02_10 16枚目 衝突判定と応答
+	void CheckAllCollisions();
+
+	// 02_12 9枚目
+	void ChangePhase();
+
+	// 02_12 26枚目	デスフラグのgetter
+	bool IsFinished() const { return finished_; }
+
+private:
+	// 02_12 4枚目 ゲームのフェーズ（型）
+	enum class Phase {
+		kFadeIn,  // フェードイン 02_13 28枚目で追加
+		kPlay,    // ゲームプレイ
+		kDeath,   // デス演出
+		kFadeOut, // フェードアウト 02_13 28枚目で追加
+	};
+
+	// 02_12 4枚目 ゲームの現在フェーズ（変数）
+	Phase phase_;
+
+	////テクスチャーハンドル
+	uint32_t textureHandle_ = 0;
+
+	Sprite* sprite_ = nullptr;
+
+	//////3Dモデル
+	Model* model_ = nullptr;
+
+	// ブロックの3Dモデル
+	Model* blockModel_ = nullptr;
+
+	WorldTransform worldTransform_;
+
+	////カメラ
+	Camera camera_;
+
+	std::vector<std::vector<WorldTransform*>> worldTransformBlocks_;
+
+	DebugCamera* debugCamera_ = nullptr;
 
 	// 自キャラ
 	Player* player_ = nullptr;
 
-	// キューブ
+	// 02_09 10枚目 エネミークラス
+	Enemy* enemy_ = nullptr;
+
+	// Math* math_ = nullptr;
+
+	// デバッグカメラ有効
+	bool isDebugCameraActive_ = false;
+
 	Skydome* skydome_ = nullptr;
 
-	// 敵
+	Model* modelSkydome_ = nullptr;
+
+	Model* modelPlayer_ = nullptr;
+
+	Model* enemy_model_ = nullptr;
+
+	MapChipField* mapChipField_;
+
+	CameraController* CController_ = nullptr;
+
 	std::list<Enemy*> enemies_;
 
-	// 全ての当たり判定を行う
-	void CheckAllCollisions();
+	DeathParticles* deathParticles_ = nullptr;
 
-	// 表示ブロック
-	void GenerateBlocks();
+	// 02_11 16枚目
+	Model* deathParticle_model_ = nullptr;
 
-	MapChipFiled* mapChipFiled_;
+	// 02_12 26枚目
+	bool finished_ = false;
 
-	CameraController* cameraController_;
+	// 02_13 28枚目
+	Fade* fade_ = nullptr;
 
-	// 初期化
-	void Initialize();
-	// 更新
-	void Update();
-	// 描画
-	void Draw();
-	// デストラクタ
-	~GameScene();
-
-private:
-	KamataEngine::WorldTransform worldTransform_;
-
-	KamataEngine::Camera camera_;
-
-	KamataEngine::DebugCamera* debugCamera_ = nullptr;
-
-	std::vector<std::vector<KamataEngine::WorldTransform*>> worldTransformBlocks_;
-
-	bool isDebugCameraActive_ = false;
+	UpData* upData = nullptr;
 };
