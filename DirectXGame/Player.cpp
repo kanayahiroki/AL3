@@ -459,6 +459,7 @@ AABB Player::GetAttackAABB() {
 void Player::OnCollision(const Enemy* enemy) {
 	(void)enemy;
 
+
 	// 02_12 12枚目 書き換え
 	isDead_ = true;
 }
