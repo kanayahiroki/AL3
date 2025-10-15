@@ -34,6 +34,9 @@ public:
 
 	// 02_10 スライド14枚目
 	AABB GetAABB();
+
+	// 02_12 11枚目 デスフラグ
+	bool IsEnemyDead() const { return isEnemyDead_; }
 	// 02_10 スライド14枚目 ワールド座標を取得
 	Vector3 GetWorldPosition();
 	// 02_10 スライド20枚目 衝突応答
@@ -74,4 +77,6 @@ private:
 	// 02_10 14枚目 当たり判定サイズ
 	static inline const float kWidth = 0.8f;
 	static inline const float kHeight = 0.8f;
+
+	bool isEnemyDead_ = false;
 };

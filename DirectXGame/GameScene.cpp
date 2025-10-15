@@ -231,6 +231,17 @@ void GameScene::Update() {
 	// if (deathParticles_) {
 	//	deathParticles_->Update();
 	// }
+
+	//デスフラグの立った敵を削除
+	enemies_.remove_if([](Enemy* enemy) {
+		if (enemy->IsEnemyDead()) {
+			delete enemy;
+			return true;
+		}
+		return false;
+	});
+
+
 #pragma endregion
 
 	ChangePhase();
@@ -258,7 +269,7 @@ void GameScene::Update() {
 
 		// UpdateCamera();
 #ifdef _DEBUG
-		if (Input::GetInstance()->TriggerKey(DIK_SPACE)) {
+		if (Input::GetInstance()->TriggerKey(DIK_M)) {
 			// フラグをトグル
 			isDebugCameraActive_ = !isDebugCameraActive_;
 		}
@@ -306,7 +317,7 @@ void GameScene::Update() {
 		}
 
 #ifdef _DEBUG
-		if (Input::GetInstance()->TriggerKey(DIK_SPACE)) {
+		if (Input::GetInstance()->TriggerKey(DIK_M)) {
 			// フラグをトグル
 			isDebugCameraActive_ = !isDebugCameraActive_;
 		}

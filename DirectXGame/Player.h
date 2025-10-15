@@ -24,6 +24,14 @@ public:
 		kLeft,
 	};
 
+	//振る舞い
+	enum class Behavior 
+	{ 
+		kRoot,
+		kAttack, 
+		kUnknown
+	};
+
 	// 角 02_07スライド16枚目
 	enum Corner { kRightBottom, kLeftBottom, kRightTop, kLeftTop, kNumCorner };
 
@@ -57,11 +65,35 @@ public:
 	// AABBを取得
 	AABB GetAABB();
 
+	// 攻撃用AABBを取得
+	AABB GetAttackAABB();
+
 	// 02_10 21枚目 衝突応答
 	void OnCollision(const Enemy* enemy);
 
 	// 02_12 11枚目 デスフラグ
 	bool IsDead() const { return isDead_; }
+
+	//通常行動更新
+	void BehaviorRootUpdate();
+
+	//攻撃行動更新
+	void BehaviorAttackUpdate();
+
+	//通常行動初期化
+	void BehaviorRootInitialize();
+
+	// 攻撃行動初期化
+	void BehaviorAttackInitialize();
+
+	//振る舞い
+	Behavior behavior_ = Behavior::kRoot;
+
+	//次の振る舞いリクエスト
+	Behavior behaviorRequest_ = Behavior::kUnknown;
+
+	//攻撃ギミックの経過時間カウンター
+	uint32_t attackParametoer_ = 0;
 
 private:
 	// ワールド変換データ

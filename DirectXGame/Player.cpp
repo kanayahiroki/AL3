@@ -19,6 +19,10 @@ void Player::Initialize(Model* model, Camera* camera, const Vector3& position) {
 
 	worldTransform_.translation_ = position;
 
+	if (position.x == 0.0f && position.y == 0.0f && position.z == 0.0f) {
+		worldTransform_.translation_ = {0.0f, 0.0f, 5.0f};
+	}
+
 	worldTransform_.rotation_.y = std::numbers::pi_v<float> / 2.0f;
 }
 
@@ -366,83 +370,47 @@ Vector3 Player::CornerPosition(const Vector3& center, Corner corner) {
 
 void Player::UpDate() {
 
-	// 移動入力(02_07 スライド10枚目)
-	InputMove();
-
-	// 移動入力
-	// 衝突情報を初期化
-	CollisionMapInfo collisionMapInfo = {};
-	collisionMapInfo.move = velocity_;
-	// 移動量に速度の値をコピー
-	//  マップ衝突チェック(02_07 スライド13枚目)
-	CheckMapCollision(collisionMapInfo);
-
-	// worldTransform_.translation_ = Add(velocity_, worldTransform_.translation_);
-
-	// 移動(02_07 スライド36枚目)
-	worldTransform_.translation_ += collisionMapInfo.move;
-
-	// 天井接触による落下開始(02_07 スライド38枚目)
-	if (collisionMapInfo.ceiling) {
-		velocity_.y = 0;
+	if (behaviorRequest_ != Behavior::kUnknown) {
+		// 振る舞いを切り替える
+		behavior_ = behaviorRequest_;
+		// 各振る舞いごとの初期化を実行
+		switch (behavior_) {
+		case Behavior::kRoot:
+		default:
+			BehaviorRootInitialize();
+			break;
+		case Behavior::kAttack:
+			BehaviorAttackInitialize();
+			break;
+		}
+		// 振る舞いリクエストをクリア
+		behaviorRequest_ = Behavior::kUnknown;
 	}
 
-	// 02_08 スライド27枚目 壁接触している場合の処理
-	UpdateOnWall(collisionMapInfo);
-
-	// 接地判定
-	UpdateOnGround(collisionMapInfo);
-
-	// bool landing = false;
-
-	//// 下降あり？
-	// if (velocity_.y < 0) {
-	//	// Y座標が地面以下になったら着地
-	//	if (worldTransform_.translation_.y <= 1.0f) {
-	//		landing = true;
-	//	}
-	// }
-
-	//// 接地状態
-
-	//// 接地判定
-	// if (onGround_) {
-	//	// ジャンプ開始
-	//	if (velocity_.y > 0.0f) {
-	//		onGround_ = false;
-	//	}
-	// } else {
-	//	// 着地
-	//	if (landing) {
-	//		worldTransform_.translation_.y = 1.0f;
-	//		velocity_.x *= (1.0f - kAttenuation);
-	//		velocity_.y = 0.0f;
-	//		onGround_ = true;
-	//	}
-	// }
-
-	// 旋回制御
-	if (turnTimer_ > 0.0f) {
-		// タイマーを進める
-		turnTimer_ = std::max(turnTimer_ - (1.0f / 60.0f), 0.0f);
-
-		float destinationRotationYTable[] = {std::numbers::pi_v<float> / 2.0f, std::numbers::pi_v<float> * 3.0f / 2.0f};
-
-		float destinationRotationY = destinationRotationYTable[static_cast<uint32_t>(lrDirection_)];
-
-		worldTransform_.rotation_.y = EaseInOut(destinationRotationY, turnFirstRotationY_, turnTimer_ / kTimeTurn);
+	switch (behavior_) {
+	// 通常行動
+	case Behavior::kRoot:
+	default:
+		BehaviorRootUpdate();
+		break;
+	// 攻撃行動
+	case Behavior::kAttack:
+		BehaviorAttackUpdate();
+		break;
 	}
 
-	upData->WorldTransformUpData(worldTransform_);
 }
-
 //// アフィン変換行列の生成
 // worldTransform_.matWorld_ = MakeAffineMatrix(worldTransform_.scale_, worldTransform_.rotation_, worldTransform_.translation_);
 
 //// 定数バッファに転送する
 // worldTransform_.TransferMatrix();
 
-void Player::Draw() { model_->Draw(worldTransform_, *camera_); }
+void Player::Draw() {
+	if (model_) {
+		model_->Draw(worldTransform_, *camera_);
+	}
+}
 
 // 02_10 10枚目
 Vector3 Player::GetWorldPosition() {
@@ -468,10 +436,142 @@ AABB Player::GetAABB() {
 	return aabb;
 }
 
+AABB Player::GetAttackAABB() {
+	Vector3 worldPos = GetWorldPosition();
+	AABB aabb;
+
+	// 攻撃判定をプレイヤーの現在の向きに応じて調整
+	if (lrDirection_ == LRDirection::kRight) {
+		// 右向きの場合: プレイヤーの右側に攻撃範囲を広げる
+		aabb.min = {worldPos.x + kWidth / 2.0f, worldPos.y - kHeight / 2.0f, worldPos.z - kWidth / 2.0f};
+		aabb.max = {worldPos.x + kWidth / 2.0f + 1.0f, worldPos.y + kHeight / 2.0f, worldPos.z + kWidth / 2.0f}; // 幅を1.0f広げる
+	} else {
+		// 左向きの場合: プレイヤーの左側に攻撃範囲を広げる
+		aabb.min = {worldPos.x - kWidth / 2.0f - 1.0f, worldPos.y - kHeight / 2.0f, worldPos.z - kWidth / 2.0f}; // 幅を1.0f広げる
+		aabb.max = {worldPos.x - kWidth / 2.0f, worldPos.y + kHeight / 2.0f, worldPos.z + kWidth / 2.0f};
+	}
+
+	return aabb;
+	;
+}
+
 // 02_10 21枚目
 void Player::OnCollision(const Enemy* enemy) {
 	(void)enemy;
 
 	// 02_12 12枚目 書き換え
 	isDead_ = true;
+}
+
+void Player::BehaviorRootUpdate() {
+	// 移動入力(02_07 スライド10枚目)
+	InputMove();
+
+	// 衝突情報を初期化
+	CollisionMapInfo collisionMapInfo = {};
+	collisionMapInfo.move = velocity_;
+
+	// マップ衝突チェック
+	CheckMapCollision(collisionMapInfo);
+
+	// 移動
+	worldTransform_.translation_ += collisionMapInfo.move;
+
+	// 天井接触による落下開始
+	if (collisionMapInfo.ceiling) {
+		velocity_.y = 0;
+	}
+
+	// 壁接触中の処理
+	UpdateOnWall(collisionMapInfo);
+
+	// 接地判定
+	UpdateOnGround(collisionMapInfo);
+
+	// 旋回制御
+	if (turnTimer_ > 0.0f) {
+		// タイマーを進める
+		turnTimer_ = std::max(turnTimer_ - (1.0f / 60.0f), 0.0f);
+
+		float destinationRotationYTable[] = {std::numbers::pi_v<float> / 2.0f, std::numbers::pi_v<float> * 3.0f / 2.0f};
+
+		float destinationRotationY = destinationRotationYTable[static_cast<uint32_t>(lrDirection_)];
+
+		worldTransform_.rotation_.y = EaseInOut(destinationRotationY, turnFirstRotationY_, turnTimer_ / kTimeTurn);
+	}
+
+	upData->WorldTransformUpData(worldTransform_);
+
+	if (Input::GetInstance()->TriggerKey(DIK_SPACE)) 
+	{
+		// 攻撃モードへ
+		behaviorRequest_ = Behavior::kAttack;
+	}
+}
+
+void Player::BehaviorAttackUpdate() {
+	
+	//攻撃中の前進速度の設定
+	
+	// 攻撃中の移動速度を直接設定（向きに応じて）
+	float attackSpeed = 0.2f; // 攻撃中の推進力
+
+	// 攻撃中は、他の入力（重力など）を無視して強制的に速度を設定
+	velocity_ = {0.0f, 0.0f, 0.0f};
+
+	if (lrDirection_ == LRDirection::kRight) {
+		velocity_.x = attackSpeed;
+	} else { // kLeft
+		velocity_.x = -attackSpeed;
+	}
+
+	
+	// 2. 衝突判定と移動のコアロジックを再利用
+
+	// 衝突情報を初期化
+	CollisionMapInfo collisionMapInfo = {};
+	collisionMapInfo.move = velocity_; // 現在設定した速度（移動量）を使用
+
+	// マップ衝突チェック（ここで壁に当たれば move が補正される）
+	CheckMapCollision(collisionMapInfo);
+
+	// 移動
+	worldTransform_.translation_ += collisionMapInfo.move;
+
+	// 壁接触中の処理（速度を減衰させるなど）
+	UpdateOnWall(collisionMapInfo);
+
+	
+	// 攻撃中の見た目の変化 (回転)
+	float t = static_cast<float>(attackParametoer_) / 30.0f;
+	worldTransform_.rotation_.z = Lerp(0.0f, std::numbers::pi_v<float> / 4.0f, std::sin(t * std::numbers::pi_v<float>));
+
+	
+	// ワールド行列更新とカウンター
+	upData->WorldTransformUpData(worldTransform_);
+
+	attackParametoer_++;
+
+	// 既定の時間が経過したら通常モードへ
+	if (attackParametoer_ > 30){
+
+
+			worldTransform_.rotation_.z = 0.0f;
+		// 2. !!! 攻撃によって設定されたX軸方向の速度をリセットする !!!
+		velocity_.x = 0.0f;
+			behaviorRequest_ = Behavior::kRoot;
+		}
+
+}
+
+void Player::BehaviorRootInitialize() 
+{
+	worldTransform_.rotation_.z = 0.0f; // 攻撃終了後の回転をリセット
+}
+
+void Player::BehaviorAttackInitialize() 
+{ 
+	attackParametoer_ = 0; 
+	
+	
 }

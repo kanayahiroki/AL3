@@ -69,6 +69,14 @@ AABB Enemy::GetAABB() {
 	return aabb;
 }
 
+
+// 02_10 21枚目
+void Enemy::OnCollision(const Player* enemy) {
+	(void)enemy;
+
+	// 02_12 12枚目 書き換え
+	isEnemyDead_ = true;
+}
 // 02_10 スライド14枚目
 Vector3 Enemy::GetWorldPosition() {
 
