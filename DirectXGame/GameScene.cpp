@@ -1,4 +1,6 @@
 #include "GameScene.h"
+#include "Player.h"
+#include "Enemy.h"
 
 using namespace KamataEngine;
 
@@ -112,6 +114,8 @@ void GameScene::Initialize() {
 
 		newEnemy->Initialize(enemy_model_, &camera_, enemyPosition);
 
+		// 敵は壁に当たると反転する
+		newEnemy->SetMapChipField(mapChipField_);
 		enemies_.push_back(newEnemy);
 	}
 
@@ -251,7 +255,7 @@ void GameScene::Update() {
 	case Phase::kFadeIn:
 		fade_->Update();
 		if (fade_->IsFinished()) {
-			fade_->Start(Fade::Status::FadeOut, 1.0f);
+			fade_->Start(Fade::Status::FadeOut, 0.01f);
 			phase_ = Phase::kPlay;
 		}
 
@@ -445,7 +449,14 @@ void GameScene::CheckAllCollisions() {
 		aabb1 = player_->GetAABB();
 
 		// 自キャラと敵弾全ての当たり判定
-		for (Enemy* enemy : enemies_) {
+		for (Enemy* enemy : enemies_) 
+		{
+
+			// ⭐︎ 衝突無効フラグのチェックを追加
+			if (enemy->IsCollisionDisabled()) {
+				continue; // コリジョン無効の敵はスキップ
+			}
+
 			// 敵弾の座標
 			aabb2 = enemy->GetAABB();
 

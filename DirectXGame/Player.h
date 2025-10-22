@@ -86,6 +86,9 @@ public:
 	// 攻撃行動初期化
 	void BehaviorAttackInitialize();
 
+	bool IsAttack() const {
+		return behavior_ == Behavior::kAttack; }
+
 	//振る舞い
 	Behavior behavior_ = Behavior::kRoot;
 

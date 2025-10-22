@@ -462,6 +462,13 @@ void Player::OnCollision(const Enemy* enemy) {
 
 	// 02_12 12枚目 書き換え
 	isDead_ = true;
+
+	if (IsAttack()) 
+	{
+		// 敵を倒した処理
+		isDead_ = false; // 仮で死なないようにする
+		return;
+	}
 }
 
 void Player::BehaviorRootUpdate() {
