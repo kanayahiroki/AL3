@@ -91,4 +91,4 @@ Vector3 Enemy::GetWorldPosition() {
 }
 
 // 02_10 スライド20枚目
-void Enemy::OnCollision(const Player* player) { (void)player; }
+//void Enemy::OnCollision(const Player* player) { (void)player; }
