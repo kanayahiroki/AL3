@@ -116,6 +116,7 @@
     <ClCompile Include="mapChipFiled.cpp" />
     <ClCompile Include="MyMath.cpp" />
     <ClCompile Include="Player.cpp" />
+    <ClCompile Include="ShieldEnemy.cpp" />
     <ClCompile Include="Skydome.cpp" />
     <ClCompile Include="TitleScene.cpp" />
     <ClCompile Include="UpData.cpp" />
@@ -205,6 +206,7 @@
     <ClInclude Include="mapChipFiled.h" />
     <ClInclude Include="MyMath.h" />
     <ClInclude Include="Player.h" />
+    <ClInclude Include="ShieldEnemy.h" />
     <ClInclude Include="Skydome.h" />
     <ClInclude Include="TitleScene.h" />
     <ClInclude Include="UpData.h" />

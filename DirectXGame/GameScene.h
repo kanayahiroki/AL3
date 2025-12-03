@@ -8,6 +8,7 @@
 #include "Skydome.h"
 #include "UpData.h"
 #include <KamataEngine.h>
+#include "ShieldEnemy.h"
 
 using namespace KamataEngine;
 
@@ -74,6 +75,10 @@ private:
 	// 02_09 10枚目 エネミークラス
 	Enemy* enemy_ = nullptr;
 
+
+	// 盾持ちの敵モデル
+	ShieldEnemy* shieldEnemy_ = nullptr;
+
 	// Math* math_ = nullptr;
 
 	// デバッグカメラ有効
@@ -87,11 +92,15 @@ private:
 
 	Model* enemy_model_ = nullptr;
 
+	Model* shieldEnemy_model_ = nullptr;
+
 	MapChipField* mapChipField_;
 
 	CameraController* CController_ = nullptr;
 
 	std::list<Enemy*> enemies_;
+
+	std::list<ShieldEnemy*> ShieldEnemies_;
 
 	DeathParticles* deathParticles_ = nullptr;
 

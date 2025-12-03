@@ -1,6 +1,7 @@
 #include "GameScene.h"
 #include "Player.h"
 #include "Enemy.h"
+#include "ShieldEnemy.h"
 
 using namespace KamataEngine;
 
@@ -117,6 +118,21 @@ void GameScene::Initialize() {
 		// 敵は壁に当たると反転する
 		newEnemy->SetMapChipField(mapChipField_);
 		enemies_.push_back(newEnemy);
+	}
+
+
+
+	shieldEnemy_model_ = Model::CreateFromOBJ("Shield");
+	for (int32_t i = 0; i < 3; ++i) {
+		ShieldEnemy* newShieldEnemy = new ShieldEnemy();
+
+		Vector3 ShieldEnemyPosition = mapChipField_->GetMapChipPositionByIndex(15 + i * 3, 20);
+
+		newShieldEnemy->Initialize(shieldEnemy_model_, &camera_, ShieldEnemyPosition);
+
+		// 敵は壁に当たると反転する
+		newShieldEnemy->SetMapChipField(mapChipField_);
+		ShieldEnemies_.push_back(newShieldEnemy);
 	}
 
 	// 02_11_16枚目 モデル読み込み
