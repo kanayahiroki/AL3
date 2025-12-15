@@ -9,6 +9,7 @@
 #include "UpData.h"
 #include <KamataEngine.h>
 #include "ShieldEnemy.h"
+#include"playerBullet.h"
 
 using namespace KamataEngine;
 

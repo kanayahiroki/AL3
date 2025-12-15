@@ -1,8 +1,8 @@
 #include "Enemy.h"
-#include "Player.h"
 #include "KamataEngine.h"
 #include "MapChipFiled.h"
 #include "MyMath.h"
+#include "Player.h"
 #include "UpData.h"
 #include <algorithm>
 #include <cassert>
@@ -91,14 +91,11 @@ void Enemy::UpDate() {
 	upData->WorldTransformUpData(worldTransform_);
 }
 
-
 // 02_09 スライド5枚目
 void Enemy::Draw() {
 	// 02_09 スライド9枚目  モデル描画
 	model_->Draw(worldTransform_, *camera_);
 }
-
-
 
 // 02_10 スライド14枚目
 AABB Enemy::GetAABB() {
@@ -113,31 +110,27 @@ AABB Enemy::GetAABB() {
 	return aabb;
 }
 
-
 // 02_10 21枚目
 void Enemy::OnCollision(const Player* player) {
 	(void)player;
 
-	
-
-	if (behavior_==Behavior::kDeth) {
+	if (behavior_ == Behavior::kDeth) {
 		// すでにデス状態なら何もしない
 		return;
 	}
 
-	//プレイヤーが攻撃中なら敵が死ぬ
+	// プレイヤーが攻撃中なら敵が死ぬ
 	if (player->IsAttack()) {
 		// 敵の状態をデスに変更
 		behavior_ = Behavior::kDeth;
-		
-		//ここで衝突無効フラグを立てる！
-		isCollisionDisabled_ = true; 
+
+		// ここで衝突無効フラグを立てる！
+		isCollisionDisabled_ = true;
 
 		// 3. デス状態の初期化処理を呼び出す (通常、状態が切り替わる直後に呼び出す)
 		BehaviorDethInitialize();
 	}
 }
-
 
 // 02_10 スライド14枚目
 Vector3 Enemy::GetWorldPosition() {
@@ -161,16 +154,16 @@ void Enemy::BehaviorDethInitialize() {
 	// デスタイマーをリセット
 	deathTimer_ = 0.0f;
 
-	//現在のY軸の回転角度を保存する
+	// 現在のY軸の回転角度を保存する
 	initialRotationY_ = worldTransform_.rotation_.y;
 
-	//X軸の歩行アニメーションをリセットする
+	// X軸の歩行アニメーションをリセットする
 	worldTransform_.rotation_.x = 0.0f;
 }
-	
+
 void Enemy::BehaviorDethUpdate() {
 	// 攻撃行動更新処理
-	
+
 	// デスタイマーを進行
 	deathTimer_ += 1.0f / 60.0f;
 
@@ -204,8 +197,6 @@ void Enemy::BehaviorDethUpdate() {
 
 void Enemy::BehaviorRootUpdate() {
 	// 通常行動更新処理
-	
-	
 
 	// 次のフレームの移動後の位置を計算
 	Vector3 nextPosition = worldTransform_.translation_ + velocity_;
@@ -229,10 +220,29 @@ void Enemy::BehaviorRootUpdate() {
 		// 3. モデルの回転角を新しい向きに合わせて調整
 		// kRight (右) の場合は Y軸 90度 (π/2)
 		// kLeft (左) の場合は Y軸 270度 (3π/2)
-		worldTransform_.rotation_.y = (direction_ == Direction::kRight) ? 
-			std::numbers::pi_v<float> / 2.0f : 
-			std::numbers::pi_v<float> * 3.0f / 2.0f;
+		worldTransform_.rotation_.y = (direction_ == Direction::kRight) ? std::numbers::pi_v<float> / 2.0f : std::numbers::pi_v<float> * 3.0f / 2.0f;
 	}
 
 	worldTransform_.translation_ += velocity_;
+}
+
+// プレイヤー弾との衝突応答
+void Enemy::OnCollision(const PlayerBullet* bullet) {
+	// bullet は const なので、bullet 自体を変更することはできません
+	(void)bullet; // bulletを使用しない場合、警告を抑制
+
+	// 敵がすでにデス状態であれば何もしない
+	if (behavior_ == Behavior::kDeth) {
+		return;
+	}
+
+	// 弾が当たったら、敵は死亡行動を開始する
+	// このロジックは、既存の OnCollision(const Player* player) のロジックを参考にしています。
+	behaviorRequest_ = Behavior::kDeth;
+
+	// 衝突無効フラグを立てる（死亡演出中は他のオブジェクトとの衝突を無視するため）
+	isCollisionDisabled_ = true;
+
+	// デス状態の初期化処理を呼び出す
+	BehaviorDethInitialize();
 }

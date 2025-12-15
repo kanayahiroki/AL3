@@ -24,6 +24,12 @@ void Player::Initialize(Model* model, Camera* camera, const Vector3& position) {
 	}
 
 	worldTransform_.rotation_.y = std::numbers::pi_v<float> / 2.0f;
+
+	// bulletModel_の初期化（弾のモデルを設定）
+	bulletModel_ = Model::CreateFromOBJ("bullet");
+
+	// 弾のリストをクリア
+	bullets_.clear();
 }
 
 void Player::InputMove() {
@@ -399,6 +405,8 @@ void Player::UpDate() {
 		break;
 	}
 
+
+	BulletsUpdate();
 }
 //// アフィン変換行列の生成
 // worldTransform_.matWorld_ = MakeAffineMatrix(worldTransform_.scale_, worldTransform_.rotation_, worldTransform_.translation_);
@@ -413,7 +421,7 @@ void Player::Draw() {
 }
 
 // 02_10 10枚目
-Vector3 Player::GetWorldPosition() {
+Vector3 Player::GetWorldPosition() const{
 
 	Vector3 worldPos;
 	// ワールド行列の平行移動成分を取得（ワールド座標）
@@ -471,6 +479,61 @@ void Player::OnCollision(const Enemy* enemy) {
 	}
 }
 
+//弾の発射処理
+void Player::FireBullet() {
+
+
+	PlayerBullet* newBullet = new PlayerBullet();
+
+
+	// 発射位置はプレイヤーの中心
+	Vector3 bulletPosition = worldTransform_.translation_;
+
+	//float offset = 0.5f;
+
+	//bulletPos の定義と初期化
+	Vector3 bulletPos = GetWorldPosition(); 
+
+	Vector3 bulletVel = {};
+
+	// 速度をプレイヤーの向きに合わせて設定
+	Vector3 bulletVelocity = {};
+	if (lrDirection_ == LRDirection::kRight) {
+		bulletVelocity.x = kPlayerBulletSpeed;
+	} else {
+		bulletVelocity.x = -kPlayerBulletSpeed;
+	}
+	newBullet->Initialize(bulletPos, bulletVel);
+
+	// ⭐︎ モデルを割り当て
+	newBullet->SetModel(bulletModel_);
+	// 弾オブジェクトを生成し、リストに追加
+	newBullet->Initialize(bulletPosition, bulletVelocity);
+
+	bullets_.push_back(newBullet);
+}
+
+// ★ 新規: 弾の更新と破棄処理
+void Player::BulletsUpdate() {
+
+	// リストを走査し、各弾の Update() を呼び出す
+	for (PlayerBullet* bullet : bullets_) {
+		bullet->Update(); // ⭐︎ 弾の移動処理を呼ぶ
+	}
+
+	// イテレータでリストを走査しながら更新と削除を行う
+	bullets_.remove_if([](PlayerBullet* bullet) {
+		
+		// 死亡フラグが立っているかチェック
+		if (bullet->IsDead()) {
+			// 削除
+			delete bullet;
+			return true; // リストから要素を削除
+		}
+		return false; // リストに残す
+	});
+}
+
 void Player::BehaviorRootUpdate() {
 	// 移動入力(02_07 スライド10枚目)
 	InputMove();
@@ -507,8 +570,14 @@ void Player::BehaviorRootUpdate() {
 
 		worldTransform_.rotation_.y = EaseInOut(destinationRotationY, turnFirstRotationY_, turnTimer_ / kTimeTurn);
 	}
-
 	upData->WorldTransformUpData(worldTransform_);
+
+	// 弾発射入力
+	if (Input::GetInstance()->TriggerKey(DIK_Q)) {
+		// 弾の発射
+		FireBullet();
+	}
+
 
 	if (Input::GetInstance()->TriggerKey(DIK_SPACE)) 
 	{
@@ -516,6 +585,48 @@ void Player::BehaviorRootUpdate() {
 		behaviorRequest_ = Behavior::kAttack;
 	}
 }
+
+
+void Player::FirePlayerBullet() {
+	// 弾数が最大数を超えていたら発射しない (kMaxBullets は Player.h で定義済みと仮定)
+	// if (bullets_.size() >= kMaxBullets) {
+	//     return;
+	// }
+
+	PlayerBullet* newBullet = new PlayerBullet();
+
+	// ⭐︎ 非常に重要：プレイヤーの現在座標を取得
+	// プレイヤーのワールド座標を取得する GetWorldPosition() 関数が必要です
+	Vector3 bulletPos = GetWorldPosition();
+
+	Vector3 bulletVel = {};
+	// kPlayerBulletSpeed は Player.h で定義済みと仮定
+
+	// 自己衝突回避のためのオフセット (PlayerBulletの直径分 + 余裕)
+	float offset = 0.6f;
+
+	// プレイヤーの向きに応じて速度と位置を設定
+	if (lrDirection_ == LRDirection::kRight) {
+		bulletVel.x = kPlayerBulletSpeed;
+		bulletPos.x += offset; // 進行方向にオフセット
+	} else {
+		bulletVel.x = -kPlayerBulletSpeed;
+		bulletPos.x -= offset; // 進行方向にオフセット
+	}
+
+	// 弾の初期化
+	newBullet->Initialize(bulletPos, bulletVel);
+
+	// モデルを割り当て (SetModel は PlayerBullet.h に追加済みと仮定)
+	if (bulletModel_) {
+		newBullet->SetModel(bulletModel_);
+	}
+
+	bullets_.push_back(newBullet);
+}
+
+
+
 
 void Player::BehaviorAttackUpdate() {
 	

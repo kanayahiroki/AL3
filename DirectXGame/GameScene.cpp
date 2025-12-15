@@ -419,6 +419,11 @@ void GameScene::Draw() {
 		player_->Draw();
 	}
 
+	const auto& playerBullets = player_->GetPlayerBullets();
+	for (PlayerBullet* bullet : playerBullets) {
+		bullet->Draw(&camera_);
+	}
+
 	// 天球描画
 	skydome_->Draw();
 
@@ -482,6 +487,39 @@ void GameScene::CheckAllCollisions() {
 				player_->OnCollision(enemy);
 				// 敵弾の衝突時コールバックを呼び出す
 				enemy->OnCollision(player_);
+			}
+		}
+	}
+#pragma endregion
+
+
+#pragma region プレイヤー弾と敵の当たり判定
+	// プレイヤー弾リストの取得
+
+	const auto& playerBullets = player_->GetPlayerBullets();
+	(void)playerBullets;
+
+
+	// すべてのプレイヤー弾に対しての当たり判定
+	for (PlayerBullet* bullet : playerBullets) 
+	{
+		aabb1 = bullet->GetAABB(); // 弾のAABB
+
+		for (Enemy* enemy : enemies_) {
+
+			// ⭐︎ 衝突無効フラグのチェックを追加
+			if (enemy->IsCollisionDisabled()) {
+				continue; // コリジョン無効の敵はスキップ
+			}
+
+			aabb2 = enemy->GetAABB(); // 敵のAABB
+
+			// AABB同士の交差判定
+			if (IsCollision(aabb1, aabb2)) {
+				// 弾の衝突時コールバック (弾を消す)
+				bullet->OnCollision(enemy);
+				// 敵の衝突時コールバック (敵にダメージを与える、倒すなど)
+				enemy->OnCollision(bullet);
 			}
 		}
 	}

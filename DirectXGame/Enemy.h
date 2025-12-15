@@ -3,6 +3,7 @@
 #include "MapChipFiled.h"
 #include "MyMath.h"
 #include "UpData.h"
+#include "playerBullet.h"
 
 using namespace KamataEngine;
 
@@ -51,7 +52,8 @@ public:
 	Vector3 GetWorldPosition();
 	// 02_10 スライド20枚目 衝突応答
 	void OnCollision(const Player* player);
-
+	// プレイヤー弾との衝突応答を追加
+	void OnCollision(const PlayerBullet* bullet);
 	// 通常行動更新
 	void BehaviorRootUpdate();
 

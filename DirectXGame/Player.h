@@ -4,10 +4,13 @@
 #include "MapChipFiled.h"
 #include "MyMath.h"
 #include "UpData.h"
+#include "playerBullet.h"
+
 
 #include <algorithm>
 #include <cassert>
 #include <numbers>
+#include<list>
 
 class MapChipField;
 
@@ -71,8 +74,13 @@ public:
 	// 02_10 21枚目 衝突応答
 	void OnCollision(const Enemy* enemy);
 
+	void FireBullet();
+
 	// 02_12 11枚目 デスフラグ
 	bool IsDead() const { return isDead_; }
+
+	// プレイヤー弾リストのgetter
+	const std::list<PlayerBullet*>& GetPlayerBullets(){ return bullets_; }
 
 	//通常行動更新
 	void BehaviorRootUpdate();
@@ -85,6 +93,13 @@ public:
 
 	// 攻撃行動初期化
 	void BehaviorAttackInitialize();
+
+	//弾の発射処理
+	void FirePlayerBullet();
+
+	//弾の更新処理
+	void BulletsUpdate();
+
 
 	bool IsAttack() const {
 		return behavior_ == Behavior::kAttack; }
@@ -105,6 +120,9 @@ private:
 	// モデル
 	Model* model_ = nullptr;
 
+	// 弾のモデル
+	Model* bulletModel_ = nullptr;
+
 	// テクスチャハンドル
 	//  uint32_t textureHandle_ = 0u;
 
@@ -113,6 +131,8 @@ private:
 	// Math* math_ = nullptr;
 
 	UpData* upData = nullptr;
+
+
 
 	Vector3 velocity_ = {};
 
@@ -175,6 +195,16 @@ private:
 
 	void InputMove();
 
+	// プレイヤー弾管理用リスト
+	std::list<PlayerBullet*> bullets_;
+
+	// プレイヤー弾の最大数
+	static inline const uint32_t kMaxBullets = 5;
+
+	//プレイヤーの弾のスピード
+	static inline const float kPlayerBulletSpeed = 0.5f;
+
+
 	// マップチップとの当たり判定情報
 	// 02_07 スライド12枚目
 	struct CollisionMapInfo {
@@ -208,4 +238,7 @@ private:
 
 	// 02_12 11枚目 デスフラグ
 	bool isDead_ = false;
+
+	
+	
 };
