@@ -128,14 +128,29 @@ void ShieldEnemy::OnCollision(const Player* player) {
 
 	// プレイヤーが攻撃中なら敵が死ぬ
 	if (player->IsAttack()) {
-		// 敵の状態をデスに変更
-		behavior_ = Behavior::kDeth;
+		// 1. プレイヤーと自分の位置関係を計算
+		// (プレイヤーのX座標 - 自分のX座標)
+		float diffX = const_cast<Player*>(player)->GetWorldPosition().x - worldTransform_.translation_.x;
 
-		// ここで衝突無効フラグを立てる！
-		isCollisionDisabled_ = true;
+		bool isHitFromBack = false;
 
-		// 3. デス状態の初期化処理を呼び出す (通常、状態が切り替わる直後に呼び出す)
-		BehaviorDethInitialize();
+		// 2. 自分の向きとプレイヤーの位置で「背後か」を判定
+		if (direction_ == Direction::kRight) {
+			// 自分が「右」を向いている時、プレイヤーが「左(マイナス)」にいれば背後
+			if (diffX < 0)
+				isHitFromBack = true;
+		} else {
+			// 自分が「左」を向いている時、プレイヤーが「右(プラス)」にいれば背後
+			if (diffX > 0)
+				isHitFromBack = true;
+		}
+
+		// 3. 背後からの攻撃なら死亡、正面なら耐える
+		if (isHitFromBack) {
+			behavior_ = Behavior::kDeth;
+			isCollisionDisabled_ = true;
+			BehaviorDethInitialize();
+		}
 	}
 }
 

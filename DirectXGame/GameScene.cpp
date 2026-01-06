@@ -37,6 +37,15 @@ GameScene::~GameScene() {
 	delete deathParticle_model_;
 
 	delete modelClear_;
+
+	// 【追加】盾持ち敵クラスの削除
+	for (ShieldEnemy* shieldEnemy : shieldEnemies_) {
+		delete shieldEnemy;
+	}
+	shieldEnemies_.clear(); // 念のためリストを空にする
+
+	// 【追加】盾持ち敵モデルの削除（もしInitializeで生成している場合）
+	delete shieldEnemy_model_;
 }
 
 void GameScene::Initialize() {
@@ -98,6 +107,22 @@ void GameScene::Initialize() {
 	worldTransformGameOver_.translation_ = {0.0f, 100.0f, 0.0f};
 	worldTransformGameOver_.scale_ = {4.0f, 4.0f, 4.0f}; // clearのscaleと合わせる
 
+	shieldEnemy_model_ = Model::CreateFromOBJ("Shield");
+
+	// 【追加】盾持ち敵の生成（例：3体生成）
+	for (int32_t i = 0; i < 3; ++i) {
+		ShieldEnemy* newShieldEnemy = new ShieldEnemy();
+
+		// 配置場所（通常の敵と重ならないように座標を調整）
+		Vector3 shieldEnemyPosition = mapChipField_->GetMapChipPositionByIndex(15 + i * 4, 18);
+
+		newShieldEnemy->Initialize(shieldEnemy_model_, &camera_, shieldEnemyPosition);
+		newShieldEnemy->SetMapChipField(mapChipField_);
+
+		// リストに追加
+		shieldEnemies_.push_back(newShieldEnemy);
+	}
+
 	// 自キャラの初期化
 	player_->Initialize(modelPlayer_, &camera_, playerPosition);
 
@@ -119,7 +144,7 @@ void GameScene::Initialize() {
 	// 02_09 10枚目 敵クラス
 	// enemy_ = new Enemy();
 	// 02_09 10枚目 敵モデル
-	enemy_model_ = Model::CreateFromOBJ("enemy");
+	enemy_model_ = Model::CreateFromOBJ("neko");
 	// 02_09 10枚目 敵位置決めて敵クラス初期化
 	// Vector3 enemyPosition = mapChipField_->GetMapChipPositionByIndex(14, 18);
 	// enemy_->Initialize(enemy_model_, &camera_, enemyPosition);
@@ -290,6 +315,11 @@ void GameScene::Update() {
 			enemy->UpDate();
 		}
 
+		// 【追加】盾持ち敵の更新
+		for (ShieldEnemy* shieldEnemy : shieldEnemies_) {
+			shieldEnemy->UpDate();
+		}
+
 		// --- 3. 敵の削除とクリア判定 (ここがポイント) ---
 		enemies_.remove_if([](Enemy* enemy) {
 			if (enemy->IsEnemyDead()) {
@@ -299,14 +329,24 @@ void GameScene::Update() {
 			return false;
 		});
 
+		// 【追加】盾持ち敵の削除
+		shieldEnemies_.remove_if([](ShieldEnemy* shieldEnemy) {
+			if (shieldEnemy->IsEnemyDead()) {
+				delete shieldEnemy;
+				return true;
+			}
+			return false;
+		});
+
+
 		// 敵とシールド敵が両方いなくなったらクリア！
-		if (enemies_.empty() && ShieldEnemies_.empty()) {
+		if (enemies_.empty() && shieldEnemies_.empty()) {
 			isClear_ = true;
 			phase_ = Phase::kFadeOut;
 			fade_->Start(Fade::Status::FadeIn, 2.0f);
 
 			worldTransformClear_.translation_ = player_->GetWorldPosition();
-			worldTransformClear_.translation_.y +=7.0f;
+			worldTransformClear_.translation_.y += 4.0f;
 			upData->WorldTransformUpData(worldTransformClear_);
 		}
 
@@ -435,6 +475,11 @@ void GameScene::Draw() {
 			}
 		}
 
+		// 【追加】盾持ち敵の描画
+		for (ShieldEnemy* shieldEnemy : shieldEnemies_) {
+			shieldEnemy->Draw();
+		}
+
 		// 敵描画
 		for (Enemy* enemy : enemies_) {
 			enemy->Draw();
@@ -501,6 +546,17 @@ void GameScene::CheckAllCollisions() {
 				player_->OnCollision(enemy);
 				// 敵弾の衝突時コールバックを呼び出す
 				enemy->OnCollision(player_);
+			}
+		}
+
+		for (ShieldEnemy* sEnemy : shieldEnemies_) {
+			aabb2 = sEnemy->GetAABB();
+			if (IsCollision(aabb1, aabb2)) {
+				// 敵側の衝突応答（背後判定など）
+				sEnemy->OnCollision(player_);
+
+				// プレイヤー側の衝突応答（上で追加した関数が呼ばれる）
+				player_->OnCollision(sEnemy);
 			}
 		}
 	}

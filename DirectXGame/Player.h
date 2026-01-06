@@ -8,6 +8,7 @@
 #include <algorithm>
 #include <cassert>
 #include <numbers>
+#include "ShieldEnemy.h"
 
 class MapChipField;
 
@@ -97,6 +98,9 @@ public:
 
 	//攻撃ギミックの経過時間カウンター
 	uint32_t attackParametoer_ = 0;
+
+	void OnCollision(const ShieldEnemy* enemy);
+
 
 private:
 	// ワールド変換データ
@@ -208,4 +212,6 @@ private:
 
 	// 02_12 11枚目 デスフラグ
 	bool isDead_ = false;
+
+	
 };

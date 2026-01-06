@@ -100,7 +100,9 @@ private:
 
 	std::list<Enemy*> enemies_;
 
-	std::list<ShieldEnemy*> ShieldEnemies_;
+	std::list<ShieldEnemy*> shieldEnemies_;
+
+	
 
 	DeathParticles* deathParticles_ = nullptr;
 

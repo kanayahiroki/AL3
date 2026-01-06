@@ -6,6 +6,7 @@
 #include <algorithm>
 #include <cassert>
 #include <numbers>
+#include "ShieldEnemy.h"
 
 using namespace KamataEngine;
 
@@ -572,6 +573,8 @@ void Player::BehaviorAttackUpdate() {
 
 }
 
+
+
 void Player::BehaviorRootInitialize() 
 {
 	worldTransform_.rotation_.z = 0.0f; // 攻撃終了後の回転をリセット
@@ -582,4 +585,11 @@ void Player::BehaviorAttackInitialize()
 	attackParametoer_ = 0; 
 	
 	
+}
+
+void Player::OnCollision(const ShieldEnemy* enemy) {
+	(void)enemy;
+
+	// ひとまず通常の敵と同じく、触れたら死ぬ設定にする場合
+	isDead_ = true;
 }
