@@ -114,4 +114,16 @@ private:
 	Fade* fade_ = nullptr;
 
 	UpData* upData = nullptr;
+
+
+	Model* modelClear_ = nullptr;
+	WorldTransform worldTransformClear_;
+	bool isClear_ = false;    // クリア判定フラグ
+	float clearTimer_ = 0.0f; // 演出用タイマー
+
+	Model* modelGameOver_ = nullptr;
+	WorldTransform worldTransformGameOver_;
+	bool isGameOver_ = false;
+	float gameOverTimer_ = 0.0f;
+
 };

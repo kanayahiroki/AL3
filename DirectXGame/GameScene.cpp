@@ -1,6 +1,6 @@
 #include "GameScene.h"
-#include "Player.h"
 #include "Enemy.h"
+#include "Player.h"
 #include "ShieldEnemy.h"
 
 using namespace KamataEngine;
@@ -35,6 +35,8 @@ GameScene::~GameScene() {
 	// 02_11_17枚目
 	delete deathParticles_;
 	delete deathParticle_model_;
+
+	delete modelClear_;
 }
 
 void GameScene::Initialize() {
@@ -81,6 +83,21 @@ void GameScene::Initialize() {
 
 	player_->SetMapChipField(mapChipField_);
 
+	// クリアモデルの生成
+	modelClear_ = Model::CreateFromOBJ("clear", true); // OBJファイル名
+	worldTransformClear_.Initialize();
+
+
+	// 表示したい位置を設定（例：画面中央付近、カメラの少し前）
+	worldTransformClear_.translation_ = {0.0f, 100.0f, 0.0f}; // 座標は調整してください
+	worldTransformClear_.scale_ = {4.0f, 4.0f, 4.0f};
+
+	modelGameOver_ = Model::CreateFromOBJ("gameOver", true); // OBJファイル名
+	worldTransformGameOver_.Initialize();
+
+	worldTransformGameOver_.translation_ = {0.0f, 100.0f, 0.0f};
+	worldTransformGameOver_.scale_ = {4.0f, 4.0f, 4.0f}; // clearのscaleと合わせる
+
 	// 自キャラの初期化
 	player_->Initialize(modelPlayer_, &camera_, playerPosition);
 
@@ -120,10 +137,8 @@ void GameScene::Initialize() {
 		enemies_.push_back(newEnemy);
 	}
 
-
-
-	//shieldEnemy_model_ = Model::CreateFromOBJ("Shield");
-	//for (int32_t i = 0; i < 3; ++i) {
+	// shieldEnemy_model_ = Model::CreateFromOBJ("Shield");
+	// for (int32_t i = 0; i < 3; ++i) {
 	//	ShieldEnemy* newShieldEnemy = new ShieldEnemy();
 	//
 	//	Vector3 ShieldEnemyPosition = mapChipField_->GetMapChipPositionByIndex(15 + i * 3, 20);
@@ -133,7 +148,7 @@ void GameScene::Initialize() {
 	//	// 敵は壁に当たると反転する
 	//	newShieldEnemy->SetMapChipField(mapChipField_);
 	//	ShieldEnemies_.push_back(newShieldEnemy);
-	//}
+	// }
 
 	// 02_11_16枚目 モデル読み込み
 	deathParticle_model_ = Model::CreateFromOBJ("deathParticle");
@@ -200,67 +215,6 @@ void GameScene::GenerateBlocks() {
 }
 
 void GameScene::Update() {
-	// ここにインゲームの更新処理を書
-#pragma region 前の更新処理
-	//	// 自キャラの更新
-	//	player_->UpDate();
-	//	skydome_->Update();
-	//	// 02_09 12枚目 敵更新
-	//	// enemy_->UpDate();
-	//
-	//	for (Enemy* enemy : enemies_) {
-	//		enemy->UpDate();
-	//	}
-	//
-	//	for (std::vector<WorldTransform*>& worldTransformBlockLine : worldTransformBlocks_) {
-	//		for (WorldTransform*& worldTransformBlock : worldTransformBlockLine) {
-	//			if (!worldTransformBlock)
-	//				continue;
-	//			// アフィン変換行列の生成
-	//			worldTransformBlock->matWorld_ = MakeAffineMatrix(worldTransformBlock->scale_, worldTransformBlock->rotation_, worldTransformBlock->translation_);
-	//
-	//			// 定数バッファに転送する
-	//			worldTransformBlock->TransferMatrix();
-	//		}
-	//	}
-	//
-	// #ifdef _DEBUG
-	//	// デバックの時Cキーを押すと状態が反転する
-	//	if (Input::GetInstance()->TriggerKey(DIK_C)) {
-	//		isDebugCameraActive_ = !isDebugCameraActive_;
-	//	}
-	// #endif // ! _DEBUG
-	//	// カメラの処理
-	//	if (isDebugCameraActive_) {
-	//		debugCamera_->Update();
-	//		camera_.matView = debugCamera_->GetCamera().matView;
-	//		camera_.matProjection = debugCamera_->GetCamera().matProjection;
-	//		// ビュープロジェクション行列の転送AL3_02_02*/
-	//		camera_.TransferMatrix();
-	//	} else {
-	//		// ビュープロジェクション行列の更新と転送AL3_02_02*/
-	//
-	//		camera_.UpdateMatrix();
-	//	}
-	//	CController_->Updata();
-	//
-	//	// 02_10 22枚目 衝突判定
-	//	CheckAllCollisions();
-
-	//// 02_11 18枚目 デスパーティクルあれば更新
-	// if (deathParticles_) {
-	//	deathParticles_->Update();
-	// }
-
-	//デスフラグの立った敵を削除
-	enemies_.remove_if([](Enemy* enemy) {
-		if (enemy->IsEnemyDead()) {
-			delete enemy;
-			return true;
-		}
-		return false;
-	});
-
 
 #pragma endregion
 
@@ -336,6 +290,26 @@ void GameScene::Update() {
 			enemy->UpDate();
 		}
 
+		// --- 3. 敵の削除とクリア判定 (ここがポイント) ---
+		enemies_.remove_if([](Enemy* enemy) {
+			if (enemy->IsEnemyDead()) {
+				delete enemy;
+				return true;
+			}
+			return false;
+		});
+
+		// 敵とシールド敵が両方いなくなったらクリア！
+		if (enemies_.empty() && ShieldEnemies_.empty()) {
+			isClear_ = true;
+			phase_ = Phase::kFadeOut;
+			fade_->Start(Fade::Status::FadeIn, 2.0f);
+
+			worldTransformClear_.translation_ = player_->GetWorldPosition();
+			worldTransformClear_.translation_.y +=7.0f;
+			upData->WorldTransformUpData(worldTransformClear_);
+		}
+
 #ifdef _DEBUG
 		if (Input::GetInstance()->TriggerKey(DIK_M)) {
 			// フラグをトグル
@@ -373,7 +347,22 @@ void GameScene::Update() {
 		// デス演出フェーズ
 
 		if (deathParticles_ && deathParticles_->IsFinished()) {
+			isGameOver_ = true;
 			phase_ = Phase::kFadeOut;
+			fade_->Start(Fade::Status::FadeIn, 2.0f);
+
+			worldTransformGameOver_.translation_ = player_->GetWorldPosition();
+			worldTransformGameOver_.translation_.y += 7.0f;
+			upData->WorldTransformUpData(worldTransformGameOver_);
+		}
+
+		if (isGameOver_) {
+			gameOverTimer_ += 1.0f / 60.0f;
+			float angle = (gameOverTimer_ / 2.0f) * 2.0f * std::numbers::pi_v<float>;
+
+			worldTransformGameOver_.translation_.y += std::sin(angle) * 0.01f;
+
+			upData->WorldTransformUpData(worldTransformGameOver_);
 		}
 
 		//    skydome生成
@@ -393,7 +382,24 @@ void GameScene::Update() {
 		break;
 
 	case Phase::kFadeOut:
+
+
 		fade_->Update();
+
+		// 【追加】ゲームオーバー演出
+		if (isGameOver_) {
+			gameOverTimer_ += 1.0f / 60.0f;
+			float angle = gameOverTimer_ / 2.0f * 2.0f * std::numbers::pi_v<float>;
+			worldTransformGameOver_.translation_.y += std::sin(angle) * 0.01f;
+			upData->WorldTransformUpData(worldTransformGameOver_);
+		}
+
+		if (isClear_) {
+			clearTimer_ += 1.0f / 60.0f;
+			float angle = clearTimer_ / 2.0f * 2.0f * std::numbers::pi_v<float>;
+			worldTransformClear_.translation_.y += std::sin(angle) * 0.01f;
+			upData->WorldTransformUpData(worldTransformClear_);
+		}
 		if (fade_->IsFinished()) {
 			finished_ = true;
 		}
@@ -415,30 +421,44 @@ void GameScene::Draw() {
 
 	Model::PreDraw(dxCommon->GetCommandList());
 
-	if (!player_->IsDead()) {
-		player_->Draw();
+	if (!isClear_ && !isGameOver_) {
+		if (!player_->IsDead()) {
+			player_->Draw();
+		}
+
+		// ブロック描画
+		for (std::vector<WorldTransform*>& worldTransformBlockLine : worldTransformBlocks_) {
+			for (WorldTransform*& worldTransformBlock : worldTransformBlockLine) {
+				if (!worldTransformBlock)
+					continue;
+				blockModel_->Draw(*worldTransformBlock, camera_);
+			}
+		}
+
+		// 敵描画
+		for (Enemy* enemy : enemies_) {
+			enemy->Draw();
+		}
 	}
 
 	// 天球描画
 	skydome_->Draw();
 
-	// ブロックの描画
-	for (std::vector<WorldTransform*>& worldTransformBlockLine : worldTransformBlocks_) {
-		for (WorldTransform*& worldTransformBlock : worldTransformBlockLine) {
-			if (!worldTransformBlock)
-				continue;
-			blockModel_->Draw(*worldTransformBlock, camera_);
-		}
-	}
-
-	// 02_09 12枚目 敵更新
-	for (Enemy* enemy : enemies_) {
-		enemy->Draw();
+	if (isClear_) {
+		modelClear_->Draw(worldTransformClear_, camera_);
 	}
 
 	// 02_11 18枚目 デスパーティクルあれば描画
 	if (deathParticles_) {
 		deathParticles_->Draw();
+	}
+	// 【追加】ゲームオーバーロゴ
+	if (isGameOver_) {
+		modelGameOver_->Draw(worldTransformGameOver_, camera_);
+	}
+	// クリアしていたら「CLEAR」モデルを描画
+	if (isClear_) {
+		modelClear_->Draw(worldTransformClear_, camera_);
 	}
 
 	Model::PostDraw();
@@ -465,8 +485,7 @@ void GameScene::CheckAllCollisions() {
 		aabb1 = player_->GetAABB();
 
 		// 自キャラと敵弾全ての当たり判定
-		for (Enemy* enemy : enemies_) 
-		{
+		for (Enemy* enemy : enemies_) {
 
 			// ⭐︎ 衝突無効フラグのチェックを追加
 			if (enemy->IsCollisionDisabled()) {
