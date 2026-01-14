@@ -76,7 +76,7 @@ void GameScene::Initialize() {
 	// 自キャラの生成
 	player_ = new Player();
 
-	modelPlayer_ = Model::CreateFromOBJ("player", true);
+	modelPlayer_ = Model::CreateFromOBJ("uma", true);
 
 	// 座標をマップチップ番号で指定
 	Vector3 playerPosition = mapChipField_->GetMapChipPositionByIndex(2, 18);
