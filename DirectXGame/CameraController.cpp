@@ -8,7 +8,7 @@ using namespace KamataEngine;
 
 void CameraController::Initialize(Camera* camera) { camera_ = camera; }
 
-void CameraController::Updata() {
+void CameraController::Update() {
 	// 追従対象のワールドトランスフォームを参照
 	const WorldTransform& targetWorldTransform = target_->GetWorldTransform();
 

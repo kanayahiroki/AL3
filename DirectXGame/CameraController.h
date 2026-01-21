@@ -21,7 +21,7 @@ public:
 	/// </summary>
 	void Initialize(Camera* camera);
 
-	void Updata();
+	void Update();
 
 	// プレイヤーの動きに合わせて動く
 	void SetTarget(Player* target) { target_ = target; }

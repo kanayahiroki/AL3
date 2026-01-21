@@ -21,9 +21,9 @@ GameScene::~GameScene() {
 
 	worldTransformBlocks_.clear();
 
-	delete skydome_;
+	delete skyDome_;
 
-	delete modelSkydome_;
+	delete modelSkyDome_;
 
 	delete mapChipField_;
 
@@ -61,11 +61,11 @@ void GameScene::Initialize() {
 
 	// 02_03天球
 	// skydome生成
-	skydome_ = new Skydome();
+	skyDome_ = new Skydome();
 	// 初期化
-	modelSkydome_ = Model::CreateFromOBJ("skyDome", true);
+	modelSkyDome_ = Model::CreateFromOBJ("skyDome", true);
 
-	skydome_->Initialize(modelSkydome_, &camera_);
+	skyDome_->Initialize(modelSkyDome_, &camera_);
 
 	mapChipField_ = new MapChipField;
 
@@ -229,8 +229,8 @@ void GameScene::Update() {
 			phase_ = Phase::kPlay;
 		}
 
-		skydome_->Update();
-		CController_->Updata();
+		skyDome_->Update();
+		CController_->Update();
 		//		worldTransformSkydome_.UpdateMatrix();
 		//		cameraController->Update();
 
@@ -279,9 +279,9 @@ void GameScene::Update() {
 		// ゲームプレイフェーズの処理
 
 		//   skydome生成
-		skydome_->Update();
+		skyDome_->Update();
 
-		CController_->Updata();
+		CController_->Update();
 
 		//  自キャラの更新
 		player_->UpDate();
@@ -366,8 +366,8 @@ void GameScene::Update() {
 		}
 
 		//    skydome生成
-		skydome_->Update();
-		CController_->Updata();
+		skyDome_->Update();
+		CController_->Update();
 
 		// 敵の更新
 		for (Enemy* enemy : enemies_) {
@@ -404,8 +404,8 @@ void GameScene::Update() {
 			finished_ = true;
 		}
 
-		skydome_->Update();
-		CController_->Updata();
+		skyDome_->Update();
+		CController_->Update();
 
 		for (Enemy* enemy : enemies_) {
 			enemy->UpDate();
@@ -442,7 +442,7 @@ void GameScene::Draw() {
 	}
 
 	// 天球描画
-	skydome_->Draw();
+	skyDome_->Draw();
 
 	if (isClear_) {
 		modelClear_->Draw(worldTransformClear_, camera_);

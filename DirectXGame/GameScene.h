@@ -84,9 +84,9 @@ private:
 	// デバッグカメラ有効
 	bool isDebugCameraActive_ = false;
 
-	Skydome* skydome_ = nullptr;
+	Skydome* skyDome_ = nullptr;
 
-	Model* modelSkydome_ = nullptr;
+	Model* modelSkyDome_ = nullptr;
 
 	Model* modelPlayer_ = nullptr;
 
