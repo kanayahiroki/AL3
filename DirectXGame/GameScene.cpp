@@ -27,6 +27,11 @@ GameScene::~GameScene() {
 
 	delete mapChipField_;
 
+	delete player_;
+
+	delete modelPlayer_;
+
+
 	// 02_10 6枚目 敵クラス削除
 	for (Enemy* enemy : enemies_) {
 		delete enemy;

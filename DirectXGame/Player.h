@@ -117,7 +117,7 @@ private:
 	Vector3 velocity_ = {};
 
 	// 02_05  フレームごとの加速度
-	static inline const float kAcceleration = 0.1f;
+	static inline const float kAcceleration = 0.25f;
 
 	// 02_05 顔の向き
 	LRDirection lrDirection_ = LRDirection::kRight;
@@ -208,4 +208,13 @@ private:
 
 	// 02_12 11枚目 デスフラグ
 	bool isDead_ = false;
+
+	static inline const float kWallJumpXVelocity = 0.13f; // 壁ジャンプで横に飛ぶ力
+	static inline const float kWallJumpYVelocity = 0.3f; // 壁ジャンプで上に飛ぶ力
+
+	static inline const float kWallSlideSpeed = 0.05f; // 壁ずり落ち時の最大落下速度（小さいほどゆっくり
+
+	int jumpCount_ = 0;          // 現在のジャンプ回数
+	const int kMaxJumpCount = 2; // 最大ジャンプ回数（2ならダブルジャンプ）
+
 };

@@ -27,57 +27,79 @@ void Player::Initialize(Model* model, Camera* camera, const Vector3& position) {
 }
 
 void Player::InputMove() {
-	if (onGround_) {
+	// 1. 左右の移動入力
+	if (Input::GetInstance()->PushKey(DIK_RIGHT) || Input::GetInstance()->PushKey(DIK_LEFT)) {
+		Vector3 acceleration = {};
 
-		// 左右操作
-		if (Input::GetInstance()->PushKey(DIK_RIGHT) || Input::GetInstance()->PushKey(DIK_LEFT)) {
-			// 左右加速
-			Vector3 acceleration = {};
+		// 地上なら自由に動ける
+		bool canControl = onGround_;
+
+		// ★空中での特別許可
+		if (!onGround_) {
+			// A. 壁に接触している時の離脱入力を許可
+			if (Input::GetInstance()->PushKey(DIK_RIGHT) && velocity_.x <= 0.01f)
+				canControl = true;
+			if (Input::GetInstance()->PushKey(DIK_LEFT) && velocity_.x >= -0.01f)
+				canControl = true;
+
+			// B. 【重要】壁ジャンプ直後など、既に一定以上の速度がある場合は
+			// 下手に上書きせず、その勢いを維持させる（入力を受け付けないことで速度を保つ）
+			if (std::abs(velocity_.x) > kLimitRunSpeed * 0.5f) {
+				canControl = false;
+			}
+		}
+
+		if (canControl) {
 			if (Input::GetInstance()->PushKey(DIK_RIGHT)) {
-				if (velocity_.x < 0.0f) {
+				if (velocity_.x < 0.0f)
 					velocity_.x *= (1.0f - kAttenuation);
-				}
 				acceleration.x += kAcceleration / 60.0f;
 				if (lrDirection_ != LRDirection::kRight) {
 					lrDirection_ = LRDirection::kRight;
-
 					turnFirstRotationY_ = worldTransform_.rotation_.y;
 					turnTimer_ = kTimeTurn;
 				}
-
 			} else if (Input::GetInstance()->PushKey(DIK_LEFT)) {
-				if (velocity_.x > 0.0f) {
+				if (velocity_.x > 0.0f)
 					velocity_.x *= (1.0f - kAttenuation);
-				}
 				acceleration.x -= kAcceleration / 60.0f;
 				if (lrDirection_ != LRDirection::kLeft) {
 					lrDirection_ = LRDirection::kLeft;
-
 					turnFirstRotationY_ = worldTransform_.rotation_.y;
 					turnTimer_ = kTimeTurn;
 				}
 			}
 			velocity_ = Add(velocity_, acceleration);
-
 			velocity_.x = std::clamp(velocity_.x, -kLimitRunSpeed, kLimitRunSpeed);
-		} else {
-			// 非入力時は移動減衰をかける
-			velocity_.x *= (1.0f - kAcceleration);
-		}
-
-		// ほぼ0の場合に0にする
-		if (std::abs(velocity_.x) <= 0.0001f) {
-			velocity_.x = 0.0f;
-		}
-
-		if (Input::GetInstance()->PushKey(DIK_UP)) {
-			// ジャンプ初速
-			velocity_ = Add(Vector3(0, kJumpAcceleration / 60.0f, 0), velocity_);
 		}
 	} else {
-		// 落下速度
+		// ★非入力時の減衰を「地上のみ」にする
+		// これにより、壁ジャンプした後の慣性が空中で死ななくなります
+		if (onGround_) {
+			velocity_.x *= (1.0f - kAcceleration);
+		}
+	}
+
+	if (std::abs(velocity_.x) <= 0.0001f)
+		velocity_.x = 0.0f;
+
+	// 2. ジャンプ・落下処理
+	if (onGround_) {
+		if (Input::GetInstance()->TriggerKey(DIK_UP)) {
+			velocity_.y = kJumpAcceleration / 60.0f;
+			jumpCount_ = 1;
+			onGround_ = false;
+		}
+	} else {
 		velocity_ = Add(Vector3(0, -kGravityAcceleration / 60.0f, 0), velocity_);
 		velocity_.y = std::max(velocity_.y, -kLimitFallSpeed);
+
+		if (Input::GetInstance()->TriggerKey(DIK_UP)) {
+			if (jumpCount_ < kMaxJumpCount) {
+				velocity_.y = kJumpAcceleration / 60.0f;
+				jumpCount_++;
+			}
+		}
 	}
 }
 
@@ -241,6 +263,9 @@ void Player::UpdateOnGround(const CollisionMapInfo& info) {
 			onGround_ = true;
 			// 接地時にX速度を減衰
 			velocity_.x *= (1.0f - kAttenuationLanding);
+
+			jumpCount_ = 0; // 着地したのでリセット！
+
 			// Y速度をゼロにする
 			velocity_.y = 0.0f;
 		}
@@ -257,102 +282,83 @@ void Player::UpdateOnWall(const CollisionMapInfo& info) {
 
 // マップ衝突判定右方向
 void Player::CheckMapCollisionRight(CollisionMapInfo& info) {
-	// 右移動あり？
-	if (info.move.x <= 0) {
+	// 右移動がない、かつ finalCheck(move.x=0) でもない場合は抜ける
+	if (info.move.x < 0.0f) {
 		return;
 	}
 
 	// 移動後の4つの角の計算
 	std::array<Vector3, kNumCorner> positionsNew;
-
 	for (uint32_t i = 0; i < positionsNew.size(); ++i) {
 		positionsNew[i] = CornerPosition(worldTransform_.translation_ + info.move, static_cast<Corner>(i));
 	}
 
-	MapChipType mapChipType;
-	MapChipType mapChipTypeNext;
 	// 右の当たり判定を行う
 	bool hit = false;
-	// 右上点の判定
 	MapChipField::IndexSet indexSet;
+
+	// 右上の判定
 	indexSet = mapChipField_->GetMapChipIndexSetByPosition(positionsNew[kRightTop]);
-	mapChipType = mapChipField_->GetMapChipTypeByIndex(indexSet.xIndex, indexSet.yIndex);
-	mapChipTypeNext = mapChipField_->GetMapChipTypeByIndex(indexSet.xIndex - 1, indexSet.yIndex);
-	if (mapChipType == MapChipType::kBlock && mapChipTypeNext != MapChipType::kBlock) {
+	if (mapChipField_->GetMapChipTypeByIndex(indexSet.xIndex, indexSet.yIndex) == MapChipType::kBlock) {
 		hit = true;
 	}
-	// 右下点の判定
+	// 右下の判定
 	indexSet = mapChipField_->GetMapChipIndexSetByPosition(positionsNew[kRightBottom]);
-	mapChipType = mapChipField_->GetMapChipTypeByIndex(indexSet.xIndex, indexSet.yIndex);
-	mapChipTypeNext = mapChipField_->GetMapChipTypeByIndex(indexSet.xIndex - 1, indexSet.yIndex);
-	if (mapChipType == MapChipType::kBlock && mapChipTypeNext != MapChipType::kBlock) {
+	if (mapChipField_->GetMapChipTypeByIndex(indexSet.xIndex, indexSet.yIndex) == MapChipType::kBlock) {
 		hit = true;
 	}
 
 	// ブロックにヒット？
 	if (hit) {
-		// めり込みを排除する方向に移動量を設定する
-		indexSet = mapChipField_->GetMapChipIndexSetByPosition(worldTransform_.translation_ + info.move + Vector3(+kWidth / 2.0f, 0, 0));
-		// 現在座標が壁の外か判定
-		MapChipField::IndexSet indexSetNow;
-		indexSetNow = mapChipField_->GetMapChipIndexSetByPosition(worldTransform_.translation_ + Vector3(+kWidth / 2.0f, 0, 0));
-		if (indexSetNow.xIndex != indexSet.xIndex) {
-			// めり込み先ブロックの範囲矩形
-			MapChipField::Rect rect = mapChipField_->GetRectByIndex(indexSet.xIndex, indexSet.yIndex);
-			info.move.x = std::max(0.0f, rect.left - worldTransform_.translation_.x - (kWidth / 2.0f + kBlank));
-			info.hitWall = true;
-		}
+		// めり込み先ブロックの範囲矩形を取得
+		MapChipField::Rect rect = mapChipField_->GetRectByIndex(indexSet.xIndex, indexSet.yIndex);
+		// 自キャラの右端をブロックの左端に揃える（めり込みを排除）
+		float distanceToWall = rect.left - worldTransform_.translation_.x - (kWidth / 2.0f + kBlank);
+		info.move.x = std::min(0.0f, distanceToWall);
+		velocity_.x = 0.0f;
+
+		info.hitWall = true;
 	}
 }
 
 // マップチップ衝突判定左方向
 void Player::CheckMapCollisionLeft(CollisionMapInfo& info) {
-
-	// 左移動あり？
-	if (info.move.x >= 0) {
+	// 左移動がない、かつ finalCheck(move.x=0) でもない場合は抜ける
+	if (info.move.x > 0.0f) {
 		return;
 	}
 
 	// 移動後の4つの角の計算
 	std::array<Vector3, kNumCorner> positionsNew;
-
 	for (uint32_t i = 0; i < positionsNew.size(); ++i) {
 		positionsNew[i] = CornerPosition(worldTransform_.translation_ + info.move, static_cast<Corner>(i));
 	}
 
-	MapChipType mapChipType;
-	MapChipType mapChipTypeNext;
 	// 左の当たり判定を行う
 	bool hit = false;
-	// 左上点の判定
 	MapChipField::IndexSet indexSet;
+
+	// 左上の判定
 	indexSet = mapChipField_->GetMapChipIndexSetByPosition(positionsNew[kLeftTop]);
-	mapChipType = mapChipField_->GetMapChipTypeByIndex(indexSet.xIndex, indexSet.yIndex);
-	mapChipTypeNext = mapChipField_->GetMapChipTypeByIndex(indexSet.xIndex + 1, indexSet.yIndex);
-	if (mapChipType == MapChipType::kBlock && mapChipTypeNext != MapChipType::kBlock) {
+	if (mapChipField_->GetMapChipTypeByIndex(indexSet.xIndex, indexSet.yIndex) == MapChipType::kBlock) {
 		hit = true;
 	}
-	// 左下点の判定
+	// 左下の判定
 	indexSet = mapChipField_->GetMapChipIndexSetByPosition(positionsNew[kLeftBottom]);
-	mapChipType = mapChipField_->GetMapChipTypeByIndex(indexSet.xIndex, indexSet.yIndex);
-	mapChipTypeNext = mapChipField_->GetMapChipTypeByIndex(indexSet.xIndex + 1, indexSet.yIndex);
-	if (mapChipType == MapChipType::kBlock && mapChipTypeNext != MapChipType::kBlock) {
+	if (mapChipField_->GetMapChipTypeByIndex(indexSet.xIndex, indexSet.yIndex) == MapChipType::kBlock) {
 		hit = true;
 	}
 
 	// ブロックにヒット？
 	if (hit) {
-		// めり込みを排除する方向に移動量を設定する
-		indexSet = mapChipField_->GetMapChipIndexSetByPosition(worldTransform_.translation_ + info.move + Vector3(-kWidth / 2.0f, 0, 0));
-		// 現在座標が壁の外か判定
-		MapChipField::IndexSet indexSetNow;
-		indexSetNow = mapChipField_->GetMapChipIndexSetByPosition(worldTransform_.translation_ + Vector3(-kWidth / 2.0f, 0, 0));
-		if (indexSetNow.xIndex != indexSet.xIndex) {
-			// めり込み先ブロックの範囲矩形
-			MapChipField::Rect rect = mapChipField_->GetRectByIndex(indexSet.xIndex, indexSet.yIndex);
-			info.move.x = std::max(0.0f, rect.right - worldTransform_.translation_.x - (kWidth / 2.0f + kBlank));
-			info.hitWall = true;
-		}
+		// めり込み先ブロックの範囲矩形を取得
+		MapChipField::Rect rect = mapChipField_->GetRectByIndex(indexSet.xIndex, indexSet.yIndex);
+		// 自キャラの左端をブロックの右端に揃える（めり込みを排除）
+		float distanceToWall = rect.right - worldTransform_.translation_.x + (kWidth / 2.0f + kBlank);
+		info.move.x = std::min(0.0f, distanceToWall);
+		velocity_.x = 0.0f;
+
+		info.hitWall = true;
 	}
 }
 
@@ -472,47 +478,91 @@ void Player::OnCollision(const Enemy* enemy) {
 }
 
 void Player::BehaviorRootUpdate() {
-	// 移動入力(02_07 スライド10枚目)
+	// 移動入力
 	InputMove();
 
 	// 衝突情報を初期化
 	CollisionMapInfo collisionMapInfo = {};
 	collisionMapInfo.move = velocity_;
 
-	// マップ衝突チェック
+	// 1. 通常のマップ衝突チェック（これで現在のフレームの移動を制限）
 	CheckMapCollision(collisionMapInfo);
 
-	// 移動
+	// --- 壁ジャンプ用の「遊び」判定 ---
+	CollisionMapInfo wallCheck = {};
+	// 左右に少しだけ(0.1f)判定を広げて、壁の近くにいるか調べる
+	float sideBuffer = 0.1f;
+	// 右を向いていたら右を、左を向いていたら左の壁をチェック
+	wallCheck.move.x = (lrDirection_ == LRDirection::kRight) ? sideBuffer : -sideBuffer;
+	CheckMapCollision(wallCheck);
+
+	// 【重要】wallCheck.hitWall を使って判定する
+	if (!onGround_ && wallCheck.hitWall) {
+		// 壁際にいるときにジャンプボタンを押したら
+		if (Input::GetInstance()->TriggerKey(DIK_UP)) {
+			// 2. 速度の書き換え（重複を削除して整理）
+			if (lrDirection_ == LRDirection::kRight) {
+				// 右を向いて壁に当たっているなら、左へ跳ぶ
+				velocity_.x = -kWallJumpXVelocity;
+				lrDirection_ = LRDirection::kLeft;
+				worldTransform_.translation_.x -= kBlank * 2.0f; // 強制脱出
+			} else {
+				// 左を向いて壁に当たっているなら、右へ跳ぶ
+				velocity_.x = kWallJumpXVelocity;
+				lrDirection_ = LRDirection::kRight;
+				worldTransform_.translation_.x += kBlank * 2.0f; // 強制脱出
+			}
+			velocity_.y = kWallJumpYVelocity;
+
+			jumpCount_ = 1;
+
+			// 壁ジャンプした瞬間の移動量を反映
+			collisionMapInfo.move = velocity_;
+
+			// 旋回アニメーションの開始設定
+			turnFirstRotationY_ = worldTransform_.rotation_.y;
+			turnTimer_ = kTimeTurn;
+		}
+	}
+
+	// 3. 座標の更新（実際の移動）
 	worldTransform_.translation_ += collisionMapInfo.move;
+
+	// 4. 貫通防止の最終チェック（移動後の座標が壁の中なら押し戻す）
+	CollisionMapInfo finalCheck = {};
+	finalCheck.move = {0, 0, 0};
+	CheckMapCollision(finalCheck);
+	worldTransform_.translation_ += finalCheck.move;
 
 	// 天井接触による落下開始
 	if (collisionMapInfo.ceiling) {
 		velocity_.y = 0;
 	}
 
-	// 壁接触中の処理
+	// 壁接触中の摩擦処理
 	UpdateOnWall(collisionMapInfo);
+
+	// 壁ずり落ち（wallCheckの結果も参考にするとより安定します）
+	if (!onGround_ && wallCheck.hitWall && velocity_.y < 0.0f) {
+		if (velocity_.y < -kWallSlideSpeed) {
+			velocity_.y = -kWallSlideSpeed;
+		}
+	}
 
 	// 接地判定
 	UpdateOnGround(collisionMapInfo);
 
 	// 旋回制御
 	if (turnTimer_ > 0.0f) {
-		// タイマーを進める
 		turnTimer_ = std::max(turnTimer_ - (1.0f / 60.0f), 0.0f);
-
 		float destinationRotationYTable[] = {std::numbers::pi_v<float> / 2.0f, std::numbers::pi_v<float> * 3.0f / 2.0f};
-
 		float destinationRotationY = destinationRotationYTable[static_cast<uint32_t>(lrDirection_)];
-
 		worldTransform_.rotation_.y = EaseInOut(destinationRotationY, turnFirstRotationY_, turnTimer_ / kTimeTurn);
 	}
 
 	upData->WorldTransformUpData(worldTransform_);
 
-	if (Input::GetInstance()->TriggerKey(DIK_SPACE)) 
-	{
-		// 攻撃モードへ
+	if (Input::GetInstance()->TriggerKey(DIK_SPACE)) {
 		behaviorRequest_ = Behavior::kAttack;
 	}
 }

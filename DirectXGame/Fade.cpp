@@ -21,7 +21,7 @@ void Fade::Update() {
 		// 02_13 21枚目
 
 		// 1フレーム分の秒数をカウントアップ
-		counter_ += 1.0f / 60.0f;
+		counter_ += 3.0f / 60.0f;
 		// フェード継続時間に達したら打ち止め
 		if (counter_ >= duration_) {
 			counter_ = duration_;
@@ -34,7 +34,7 @@ void Fade::Update() {
 		// 02_13 20枚目
 
 		// 1フレーム分の秒数をカウントアップ
-		counter_ += 1.0f / 60.0f;
+		counter_ += 0.5f / 60.0f;
 		// フェード継続時間に達したら打ち止め
 		if (counter_ >= duration_) {
 			counter_ = duration_;
