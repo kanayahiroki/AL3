@@ -119,7 +119,7 @@ void GameScene::Initialize() {
 	// 02_09 10枚目 敵クラス
 	// enemy_ = new Enemy();
 	// 02_09 10枚目 敵モデル
-	enemy_model_ = Model::CreateFromOBJ("neko");
+	enemy_model_ = Model::CreateFromOBJ("enemy");
 	// 02_09 10枚目 敵位置決めて敵クラス初期化
 	// Vector3 enemyPosition = mapChipField_->GetMapChipPositionByIndex(14, 18);
 	// enemy_->Initialize(enemy_model_, &camera_, enemyPosition);
