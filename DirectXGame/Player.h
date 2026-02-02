@@ -209,7 +209,7 @@ private:
 	// 02_12 11枚目 デスフラグ
 	bool isDead_ = false;
 
-	static inline const float kWallJumpXVelocity = 0.13f; // 壁ジャンプで横に飛ぶ力
+	static inline const float kWallJumpXVelocity = 0.15f; // 壁ジャンプで横に飛ぶ力
 	static inline const float kWallJumpYVelocity = 0.3f; // 壁ジャンプで上に飛ぶ力
 
 	static inline const float kWallSlideSpeed = 0.05f; // 壁ずり落ち時の最大落下速度（小さいほどゆっくり

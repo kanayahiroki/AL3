@@ -130,16 +130,31 @@ void GameScene::Initialize() {
 	// enemy_->Initialize(enemy_model_, &camera_, enemyPosition);
 
 	// 02_10 5枚目（for文の中身全部）
-	for (int32_t i = 0; i < 3; ++i) {
-		Enemy* newEnemy = new Enemy();
+	// 1体目
+	{
+		Enemy* enemy = new Enemy();
+		Vector3 pos = mapChipField_->GetMapChipPositionByIndex(43, 9); // 好きな座標を指定
+		enemy->SetMapChipField(mapChipField_);
+		enemy->Initialize(enemy_model_, &camera_, pos);
+		enemies_.push_back(enemy);
+	}
 
-		Vector3 enemyPosition = mapChipField_->GetMapChipPositionByIndex(14 + i * 3, 18);
+	// 2体目
+	{
+		Enemy* enemy = new Enemy();
+		Vector3 pos = mapChipField_->GetMapChipPositionByIndex(62,7); // 別の座標を指定
+		enemy->SetMapChipField(mapChipField_);
+		enemy->Initialize(enemy_model_, &camera_, pos);
+		enemies_.push_back(enemy);
+	}
 
-		newEnemy->Initialize(enemy_model_, &camera_, enemyPosition);
-
-		// 敵は壁に当たると反転する
-		newEnemy->SetMapChipField(mapChipField_);
-		enemies_.push_back(newEnemy);
+	// 3体目
+	{
+		Enemy* enemy = new Enemy();
+		Vector3 pos = mapChipField_->GetMapChipPositionByIndex(77, 4); // さらに別の座標
+		enemy->SetMapChipField(mapChipField_);
+		enemy->Initialize(enemy_model_, &camera_, pos);
+		enemies_.push_back(enemy);
 	}
 
 	// shieldEnemy_model_ = Model::CreateFromOBJ("Shield");
